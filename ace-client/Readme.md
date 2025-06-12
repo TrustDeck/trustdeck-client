@@ -1,11 +1,11 @@
-# TrustDeck ACE Connector 
-A library that provides access to the APIs of the TrustDeck ACE service.
+# TrustDeck ACE Client Library 
+A Client library that provides access to the APIs of the TrustDeck ACE service.
 
 > **Note:** This project is currently under active development. APIs and features may change.
 
 ## Overview
 
-The ACE Connector API serves as a client-side interface to the TrustDeck ACE service, providing endpoints for:
+The TrustDeck ACE Client Library serves as a client-side interface to the TrustDeck ACE service, providing endpoints for:
 
 - Domain management (create, read, update, delete)
 - Pseudonym operations (creation, retrieval, update, deletion)

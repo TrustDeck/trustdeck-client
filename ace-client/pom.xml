@@ -9,12 +9,12 @@
 	</parent>
 
 	<groupId>org.trustdeck</groupId>
-	<artifactId>api</artifactId>
+	<artifactId>client</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>TrustDeck ACE Connector</name>
-	<description>A connector library for interacting with TrustDeck ACE services.</description>
+	<name>TrustDeck ACE Client</name>
+	<description>A client library for interacting with TrustDeck ACE services.</description>
 	<url>https://github.com/your-org/connectorApplication</url>
 
 	<properties>
