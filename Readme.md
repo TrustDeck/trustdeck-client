@@ -38,6 +38,15 @@ Instantiate connectors using AceClientConfig (Local):
 
 ### Concrete Usage Example
 
+## To run the example usage files
+
+- AceClientExample.java
+- `mvn spring-boot:run`
+
+- AceClientSpringExample.java
+- `mvn spring-boot:run -Dspring-boot.run.main-class=org.trustdeck.ace.client.AceClientSpringExample`
+
+
 > **TODO:**
 
 ### How to Use in Your Application
@@ -46,3 +55,4 @@ Instantiate connectors using AceClientConfig (Local):
 2. Configure your connection properties.
 3. Instantiate a DomainConnector and PseudonymizationConnector using AceClientConfig.
 4. Call the connector methods for Domain and Pseudonymization management.
+

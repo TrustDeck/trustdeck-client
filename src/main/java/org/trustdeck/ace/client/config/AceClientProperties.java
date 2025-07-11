@@ -1,34 +1,19 @@
-/*
- *  * Copyright 2024 Your Organization
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- */
 package org.trustdeck.ace.client.config;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
- * Configuration properties for the pseudonymization connector.
- * <p>
- * These properties should be provided by the consuming application
- * (e.g., via constructor or setters).
- * </p>
+ * Configuration properties for the ACE client with a builder pattern.
  */
 @Getter
 @Setter
+@ConfigurationProperties(prefix = "ace-client")
 public class AceClientProperties {
+
     @NotBlank
     private String serviceUrl;
     @NotBlank
@@ -44,28 +29,74 @@ public class AceClientProperties {
     @NotBlank
     private String password;
 
-    /**
-     * Constructor to initialize all required properties.
-     * @param serviceUrl The URL of the ACE service
-     * @param keycloakUrl The URL of the Keycloak server
-     * @param realm The Keycloak realm
-     * @param clientId The Keycloak client ID
-     * @param clientSecret The Keycloak client secret
-     * @param userName The Keycloak username
-     * @param password The Keycloak password
-     */
-    public AceClientProperties(String serviceUrl, String keycloakUrl, String realm,
-                               String clientId, String clientSecret, String userName, String password) {
-        this.serviceUrl = serviceUrl;
-        this.keycloakUrl = keycloakUrl;
-        this.realm = realm;
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
-        this.userName = userName;
-        this.password = password;
+    // Private constructor for builder pattern
+    private AceClientProperties(Builder builder) {
+        this.serviceUrl = builder.serviceUrl;
+        this.keycloakUrl = builder.keycloakUrl;
+        this.realm = builder.realm;
+        this.clientId = builder.clientId;
+        this.clientSecret = builder.clientSecret;
+        this.userName = builder.userName;
+        this.password = builder.password;
     }
 
-
+    // Default constructor for Spring Boot binding
     public AceClientProperties() {
+    }
+
+    /**
+     * Builder class for AceClientProperties.
+     */
+    public static class Builder {
+        private String serviceUrl;
+        private String keycloakUrl;
+        private String realm;
+        private String clientId;
+        private String clientSecret;
+        private String userName;
+        private String password;
+
+        public Builder serviceUrl(String serviceUrl) {
+            this.serviceUrl = serviceUrl;
+            return this;
+        }
+
+        public Builder keycloakUrl(String keycloakUrl) {
+            this.keycloakUrl = keycloakUrl;
+            return this;
+        }
+
+        public Builder realm(String realm) {
+            this.realm = realm;
+            return this;
+        }
+
+        public Builder clientId(String clientId) {
+            this.clientId = clientId;
+            return this;
+        }
+
+        public Builder clientSecret(String clientSecret) {
+            this.clientSecret = clientSecret;
+            return this;
+        }
+
+        public Builder userName(String userName) {
+            this.userName = userName;
+            return this;
+        }
+
+        public Builder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public AceClientProperties build() {
+            return new AceClientProperties(this);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 }
