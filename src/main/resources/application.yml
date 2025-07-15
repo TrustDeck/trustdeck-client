@@ -1,0 +1,11 @@
+server:
+  port: 8085
+
+trustdeck-client:
+  service-url: https://t-trustdeck.charite.de
+  keycloak-url: https://t-trustdeck.charite.de
+  realm: production
+  client-id: trustdeck
+  client-secret: 1h6T3Dnx45hrd4pgv7YdcIfP9GRarbpN
+  user-name: test
+  password: test
