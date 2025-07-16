@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.ace.client.config;
+package org.trustdeck.client.config;
 
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;

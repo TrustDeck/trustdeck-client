@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-package org.trustdeck.ace.client.util;
+package org.trustdeck.client.util;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.trustdeck.ace.client.config.TrustDeckTokenService;
+import org.trustdeck.client.config.TrustDeckTokenService;
 
 /**
  * Class to provide helper methods.

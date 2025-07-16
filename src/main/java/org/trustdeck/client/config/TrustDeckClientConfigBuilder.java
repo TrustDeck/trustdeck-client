@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.ace.client.config;
+package org.trustdeck.client.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.ace.client;
+package org.trustdeck.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +23,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.ResponseEntity;
-import org.trustdeck.ace.client.config.TrustDeckClientConfigBuilder;
-import org.trustdeck.ace.client.model.Domain;
-import org.trustdeck.ace.client.model.Pseudonym;
-import org.trustdeck.ace.client.service.DomainConnector;
-import org.trustdeck.ace.client.service.PersonConnector;
-import org.trustdeck.ace.client.service.PseudonymConnector;
+import org.trustdeck.client.config.TrustDeckClientConfigBuilder;
+import org.trustdeck.client.model.Domain;
+import org.trustdeck.client.model.Pseudonym;
+import org.trustdeck.client.service.DomainConnector;
+import org.trustdeck.client.service.PersonConnector;
+import org.trustdeck.client.service.PseudonymConnector;
 
 /**
  * Example demonstrating usage of the TrustDeck Client Library.

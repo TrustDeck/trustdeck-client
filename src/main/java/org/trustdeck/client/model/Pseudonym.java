@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.ace.client.model;
+package org.trustdeck.client.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;

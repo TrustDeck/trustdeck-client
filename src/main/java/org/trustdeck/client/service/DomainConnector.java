@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.ace.client.service;
+package org.trustdeck.client.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +25,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.trustdeck.ace.client.config.TrustDeckClientConfig;
-import org.trustdeck.ace.client.model.Domain;
-import org.trustdeck.ace.client.util.TrustDeckClientUtil;
+import org.trustdeck.client.config.TrustDeckClientConfig;
+import org.trustdeck.client.model.Domain;
+import org.trustdeck.client.util.TrustDeckClientUtil;
 
 /**
  * A connector library for programmatic interaction with the domain management endpoints
