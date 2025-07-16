@@ -216,13 +216,13 @@ public class TrustDeckClientExample implements CommandLineRunner {
      * Helper method to set the configuration parameters 'manually' using the builder.
      */
     private void setConfig() {
-    	trustDeckClientConfigBuilder
-	    	.serviceUrl("https://t-trustdeck.charite.de")
-	        .keycloakUrl("https://t-trustdeck.charite.de")
-	        .realm("production")
-	        .clientId("trustdeck")
-	        .clientSecret("1h6T3Dnx45hrd4pgv7YdcIfP9GRarbpN")
-	        .userName("test")
-	        .password("test");
+    	trustDeckClientConfigBuilder    	
+	    	.serviceUrl("https://trustdeck.server.com")
+			.keycloakUrl("https://keycloak.server.com")
+			.realm("production")
+			.clientId("trustdeck")
+			.clientSecret("clientSecret")
+			.userName("testuser")
+			.password("testuserpassword");
     }
 }

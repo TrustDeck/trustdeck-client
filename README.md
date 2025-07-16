@@ -1,58 +1,93 @@
-# TrustDeck ACE Client Library 
-A Client library that provides access to the APIs of the TrustDeck ACE service.
+# TrustDeck Client Library 
+A Client library that provides access to the APIs of the TrustDeck services.
 
 > **Note:** This project is currently under active development. APIs and features may change.
 
 ## Overview
 
-The TrustDeck ACE Client Library serves as a client-side interface to the TrustDeck ACE service, providing endpoints for:
+The TrustDeck Client Library serves as a client-side interface to the TrustDeck APIs, providing endpoints for:
 
-- Domain management (create, read, update, delete)
-- Pseudonym operations (creation, retrieval, update, deletion)
+- Domain management (create, read, update, delete, list all)
+- Pseudonym operations (creation, read, update, delete)
+- Person management (create, read, update, delete)
 
 ## Requirements
 
-- Java 17 or later
+- Java 21 or later
 - Maven 3.6+
+- Spring
 - Keycloak authentication server
-- TrustDeck ACE service
+- TrustDeck service
 
 ## Getting Started
 
 ### Configuration
 
-Instantiate connectors using AceClientConfig (Local):
+Instantiate using TrustDeckClientConfigBuilder:
 
-    `AceClientProperties props = new AceClientProperties(
-        "http://localhost:8080",
-        "http://localhost:8081",
-        "development",
-        "ace",
-        "your-client-secret",
-        "test",
-        "your-password"
-        );
-     DomainConnector domainConnector = AceClientConfig.createDomainConnector(props);
-     PseudonymizationConnector pseudonymConnector = AceClientConfig.createPseudonymizationConnector(props);`
-
+    ```java
+	@Autowired
+	private TrustDeckClientConfigBuilder trustDeckClientConfigBuilder;
+    
+	trustDeckClientConfigBuilder
+		.serviceUrl("https://trustdeck.server.com")
+		.keycloakUrl("https://keycloak.server.com")
+		.realm("production")
+		.clientId("trustdeck")
+		.clientSecret("clientSecret")
+		.userName("testuser")
+		.password("testuserpassword");
+     
+     ```
 
 ### Concrete Usage Example
 
+
+    ```java
+	@Autowired
+	private TrustDeckClientConfigBuilder trustDeckClientConfigBuilder;
+    
+	@Autowired
+	private DomainConnector domainConnector;
+
+	@Autowired
+	private PseudonymConnector pseudonymConnector;
+    
+	trustDeckClientConfigBuilder
+		.serviceUrl("https://trustdeck.server.com")
+		.keycloakUrl("https://keycloak.server.com")
+		.realm("production")
+		.clientId("trustdeck")
+		.clientSecret("clientSecret")
+		.userName("testuser")
+		.password("testuserpassword");
+    
+     Domain newDomain = new Domain();
+     newDomain.setName("TestDomain");
+     newDomain.setPrefix("TD-");
+     ResponseEntity<Domain> createdDomainResponse = domainConnector.createDomain(newDomain);
+     if (createdDomainResponse.getStatusCode().is2xxSuccessful())
+         log.info("Successfully created domain.");
+         
+     Pseudonym newPseudonym = new Pseudonym();
+     newPseudonym.setId(pseudonymId);
+     newPseudonym.setIdType(pseudonymIdType);
+     newPseudonym.setValidityTime("1 week");
+     ResponseEntity<Pseudonym[]> createdPseudonym = pseudonymConnector.createPseudonym("TestDomain", pseudonym, true);
+     if (createdPseudonym.getStatusCode().is2xxSuccessful())
+         log.info("Successfully created pseudonym.");
+     
+     ```
+
 ## To run the example usage files
 
-- AceClientExample.java
+- TrustDeckClientExample.java
 - `mvn spring-boot:run`
-
-- AceClientSpringExample.java
-- `mvn spring-boot:run -Dspring-boot.run.main-class=org.trustdeck.ace.client.AceClientSpringExample`
-
-
-> **TODO:**
 
 ### How to Use in Your Application
 
-1. Add the TrustDeck ACE Connector library as a dependency.
+1. Add the TrustDeck Client library as a dependency.
 2. Configure your connection properties.
-3. Instantiate a DomainConnector and PseudonymizationConnector using AceClientConfig.
-4. Call the connector methods for Domain and Pseudonymization management.
+3. Autowire the connector classes.
+4. Call the connector methods.
 
