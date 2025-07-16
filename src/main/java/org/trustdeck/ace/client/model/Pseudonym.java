@@ -1,13 +1,13 @@
 /*
- * ACE (Advanced Confidentiality Engine) Client Library
- * Copyright 2025 Chethan Chinnabhandara Nagaraj & Armin Müller
- *
+ * Trust Deck Client Library
+ * Copyright 2025 TrustDeck Team
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,58 +19,45 @@ package org.trustdeck.ace.client.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
 import java.sql.Timestamp;
 
 /**
- * Data Transfer Object (DTO) for pseudonymization records, matching the pseudonymization service's data model.
+ * Data Transfer Object (DTO) for pseudonymization records in TrustDeck.
+ * 
+ * @author Chethan Nagaraj, Armin Müller
  */
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Pseudonym {
-    /** Identifier of the record */
+	
+    /** Identifier of the record. */
     @NotBlank
     private String id;
 
-    /** Type of the identifier */
+    /** Type of the identifier. */
     @NotBlank
     private String idType;
 
-    /** Pseudonym value */
+    /** Pseudonym value. */
     private String psn;
 
-    /** Start of validity period */
+    /** Start of validity period. */
     private Timestamp validFrom;
 
-    /** Whether validFrom is inherited from domain */
+    /** Whether validFrom is inherited from domain. */
     private Boolean validFromInherited;
 
-    /** End of validity period */
+    /** End of validity period. */
     private Timestamp validTo;
 
-    /** Whether validTo is inherited from domain */
+    /** Whether validTo is inherited from domain. */
     private Boolean validToInherited;
 
-    /** Validity period as a string (e.g., "1d") */
+    /** Validity period as a string (e.g., "1d"). */
     private String validityTime;
 
-    /** Name of the domain */
+    /** Name of the domain. */
     private String domainName;
-
-    @Override
-    public String toString() {
-        return "PseudonymisationDto{" +
-                "id=" + id +
-                ", idType='" + idType + '\'' +
-                ", psn='" + psn + '\'' +
-                ", validFrom=" + validFrom +
-                ", validTo=" + validTo +
-                ", domainName=" + domainName +
-                '}';
-    }
 }

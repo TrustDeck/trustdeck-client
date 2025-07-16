@@ -1,60 +1,52 @@
+/*
+ * Trust Deck Client Library
+ * Copyright 2025 TrustDeck Team
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.trustdeck.ace.client.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.KeycloakBuilder;
-import org.springframework.http.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.trustdeck.ace.client.config.TrustDeckClientConfig;
 import org.trustdeck.ace.client.model.Domain;
-import org.trustdeck.ace.client.util.AceClientUtil;
+import org.trustdeck.ace.client.util.TrustDeckClientUtil;
 
 /**
  * A connector library for programmatic interaction with the domain management endpoints
- * of the ACE pseudonymization service.
- * Provides methods for domain operations (create, retrieve, update, delete)
- * and handles Keycloak authentication using the password grant type.
+ * of the ACE pseudonymization service in TrustDeck.
+ * Provides methods for domain operations (create, read, update, delete).
+ * 
+ * @author Chethan Nagaraj, Armin Müller
  */
 @Slf4j
+@Component
 public class DomainConnector {
 
-    private final String serviceUrl;
-    private final RestTemplate restTemplate;
-    private final Keycloak keycloakClient;
-    private final AceClientUtil aceClientUtil;
-
-    /**
-     * Constructor to initialize the connector with service URL and authentication configuration.
-     *
-     * @param serviceUrl    The URI to the ACE instance
-     * @param keycloakUrl   The Keycloak server URL
-     * @param realm         The Keycloak realm
-     * @param clientId      The Keycloak client ID
-     * @param clientSecret  The Keycloak client secret
-     * @param userName      The Keycloak username
-     * @param password      The Keycloak password
-     */
-    public DomainConnector(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret, String userName, String password) {
-        this.serviceUrl = serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/";
-        this.restTemplate = new RestTemplate();
-        this.aceClientUtil = new AceClientUtil();
-
-        try {
-            this.keycloakClient = KeycloakBuilder.builder()
-                    .serverUrl(keycloakUrl)
-                    .realm(realm)
-                    .clientId(clientId)
-                    .clientSecret(clientSecret)
-                    .username(userName)
-                    .password(password)
-                    .grantType("password")
-                    .build();
-            log.info("Successfully initialized Keycloak client at {} under realm: {} and client: {}", keycloakUrl, realm, clientId);
-            aceClientUtil.ensureValidTokenOrRefresh(keycloakClient);
-        } catch (Exception e) {
-            throw new RuntimeException("Keycloak client could not be initialized", e);
-        }
-    }
+	/** Enables access to the configuration variables. */
+	@Autowired
+	private TrustDeckClientConfig trustDeckClientConfig;
+	
+	/** Enables access to utility methods. */
+	@Autowired
+	private TrustDeckClientUtil util;
 
     /**
      * Gets a list of all domains.
@@ -64,21 +56,19 @@ public class DomainConnector {
      */
     public ResponseEntity<Domain[]> getAllDomains() {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
                     .path("api/pseudonymization/experimental/domains/hierarchy")
                     .toUriString();
-            HttpEntity<?> request = new HttpEntity<>(aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Domain[]> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    request,
-                    Domain[].class
-            );
-            return response;
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Domain[].class);
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to retrieve domains: " + e.getMessage(), e);
         }
     }
@@ -92,22 +82,20 @@ public class DomainConnector {
      */
     public ResponseEntity<Domain> getDomain(String domainName) {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
                     .path("api/pseudonymization/domain")
                     .queryParam("name", domainName)
                     .toUriString();
-            HttpEntity<?> request = new HttpEntity<>(aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Domain> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    request,
-                    Domain.class
-            );
-            return response;
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Domain.class);
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to retrieve domain: " + e.getMessage(), e);
         }
     }
@@ -122,23 +110,24 @@ public class DomainConnector {
      */
     public  ResponseEntity<Domain> getDomainAttribute(String domainName, String attributeName) {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
                     .pathSegment("api", "pseudonymization", "domains", domainName, attributeName)
                     .toUriString();
-            HttpEntity<?> request = new HttpEntity<>(aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Domain> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    request,
-                    Domain.class
-            );
-            log.info("Response status: {} body: {}", response.getStatusCode().value(),
+         
+            // Build and send request
+            ResponseEntity<Domain> response =  new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Domain.class);
+            
+            log.debug("Response status: {}, body: {}", response.getStatusCode().value(),
                     HttpStatus.valueOf(response.getStatusCode().value()).getReasonPhrase());
+            
             return response;
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to retrieve domain attribute: " + e.getMessage(), e);
         }
     }
@@ -152,21 +141,19 @@ public class DomainConnector {
      */
     public ResponseEntity<Domain> createDomain(Domain domain) {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
                     .path("api/pseudonymization/domain")
                     .toUriString();
-            HttpEntity<Domain> request = new HttpEntity<>(domain, aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Domain> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    request,
-                    Domain.class
-            );
-            return response;
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.POST, util.createRequestEntity(domain), Domain.class);
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to create domain: " + e.getMessage(), e);
         }
     }
@@ -180,21 +167,19 @@ public class DomainConnector {
      */
     public ResponseEntity<Domain> createDomainComplete(Domain domain) {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
                     .path("api/pseudonymization/domain/complete")
                     .toUriString();
-            HttpEntity<Domain> request = new HttpEntity<>(domain, aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Domain> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    request,
-                    Domain.class
-            );
-            return response;
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.POST, util.createRequestEntity(domain), Domain.class);
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to create domain: " + e.getMessage(), e);
         }
     }
@@ -209,22 +194,20 @@ public class DomainConnector {
      */
     public ResponseEntity<Domain> updateDomain(String domainName, Domain domain) {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
                     .path("api/pseudonymization/domain")
                     .queryParam("name", domainName)
                     .toUriString();
-            HttpEntity<Domain> request = new HttpEntity<>(domain, aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Domain> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.PUT,
-                    request,
-                    Domain.class
-            );
-            return response;
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(domain), Domain.class);
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to update domain: " + e.getMessage(), e);
         }
     }
@@ -240,23 +223,21 @@ public class DomainConnector {
      */
     public ResponseEntity<Domain> updateDomainComplete(String domainName, Domain domain, boolean recursive) {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
                     .path("api/pseudonymization/domain/complete")
                     .queryParam("name", domainName)
                     .queryParam("recursive", recursive)
                     .toUriString();
-            HttpEntity<Domain> request = new HttpEntity<>(domain, aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Domain> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.PUT,
-                    request,
-                    Domain.class
-            );
-            return response;
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(domain), Domain.class);
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to update domain: " + e.getMessage(), e);
         }
     }
@@ -270,22 +251,21 @@ public class DomainConnector {
      */
     public ResponseEntity<Void> deleteDomain(String domainName, boolean recursive) {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
                     .path("api/pseudonymization/domain")
                     .queryParam("name", domainName)
                     .queryParam("recursive", recursive)
                     .toUriString();
-            HttpEntity<?> request = new HttpEntity<>(aceClientUtil.createHeaders(keycloakClient));
-            return restTemplate.exchange(
-                    url,
-                    HttpMethod.DELETE,
-                    request,
-                    Void.class
-            );
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.DELETE, util.createRequestEntity(), Void.class);
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to delete domain: " + e.getMessage(), e);
         }
     }
@@ -301,23 +281,21 @@ public class DomainConnector {
      */
     public ResponseEntity<Domain> updateSalt(String domainName, String newSalt, boolean allowEmpty) {
         try {
-            String url = UriComponentsBuilder.fromUriString(serviceUrl)
-                    .pathSegment("api", "pseudonymization", "domains", domainName, "salt")
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
+            		.pathSegment("api", "pseudonymization", "domains", domainName, "salt")
                     .queryParam("salt", newSalt)
                     .queryParam("allowEmpty", allowEmpty)
                     .toUriString();
-            HttpEntity<?> request = new HttpEntity<>(aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Domain> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.PUT,
-                    request,
-                    Domain.class
-            );
-            return response;
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(), Domain.class);
         } catch (Exception e) {
             if (e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to update salt: " + e.getMessage(), e);
         }
     }

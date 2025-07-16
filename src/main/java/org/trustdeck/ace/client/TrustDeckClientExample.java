@@ -1,19 +1,20 @@
 /*
- * ACE (Advanced Confidentiality Engine) Client Library Spring Boot Example
- * Copyright 2025 Chethan Chinnabhandara Nagaraj & Armin Müller
- *
+ * Trust Deck Client Library
+ * Copyright 2025 TrustDeck Team
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.trustdeck.ace.client;
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,61 +22,72 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.trustdeck.ace.client.config.AceClientConfig;
-import org.trustdeck.ace.client.model.Algorithm;
+import org.trustdeck.ace.client.config.TrustDeckClientConfigBuilder;
 import org.trustdeck.ace.client.model.Domain;
-import org.trustdeck.ace.client.model.Person;
 import org.trustdeck.ace.client.model.Pseudonym;
 import org.trustdeck.ace.client.service.DomainConnector;
 import org.trustdeck.ace.client.service.PersonConnector;
 import org.trustdeck.ace.client.service.PseudonymConnector;
 
-import java.util.List;
-
 /**
- * Spring Boot example demonstrating usage of the TrustDeck ACE Client Library.
+ * Example demonstrating usage of the TrustDeck Client Library.
+ * 
+ * @author Chethan Nagaraj, Armin Müller
  */
 @SpringBootApplication
 @Slf4j
-public class AceClientSpringExample implements CommandLineRunner {
+public class TrustDeckClientExample implements CommandLineRunner {
 
-    @Autowired
-    private AceClientConfig aceClientConfig;
+	/**	Enables access to the domain methods. */
+	@Autowired
+	private DomainConnector domainConnector;
 
+	/**	Enables access to the pseudonym methods. */
+	@Autowired
+	private PseudonymConnector pseudonymConnector;
+
+	/**	Enables access to the person methods. */
+	@Autowired
+	private PersonConnector personConnector;
+
+	/**	Enables access to the configuration builder. */
+	@Autowired
+	private TrustDeckClientConfigBuilder trustDeckClientConfigBuilder;
+
+	/**
+	 * Entry point into the example.
+	 * 
+	 * @param args
+	 */
     public static void main(String[] args) {
-        SpringApplication.run(AceClientSpringExample.class, args);
+        SpringApplication.run(TrustDeckClientExample.class, args);
     }
 
-    @Bean
-    public DomainConnector domainConnector() {
-        return aceClientConfig.createDomainConnector();
-    }
-
-    @Bean
-    public PseudonymConnector pseudonymConnector() {
-        return aceClientConfig.createPseudonymizationConnector();
-    }
-
-    @Bean
-    public PersonConnector personConnector() {
-        return aceClientConfig.createPersonConnector();
-    }
-
+    /**
+     * Method to run the example.
+     */
     @Override
     public void run(String... args) {
-        log.info("Starting AceClientSpringExample...");
-        runExample(domainConnector(), pseudonymConnector(), personConnector());
+        log.info("Starting TrustDeck Client Library example...");
+        log.info("--- Using config from application.yml.");
+        runExample();
+        log.info("Finished TrustDeck Client Library example.");
+
+        log.info("");
+        log.info("Starting TrustDeck Client Library example...");
+        log.info("--- Using manually set config.");
+        setConfig();
+        runExample();
+        log.info("Finished TrustDeck Client Library example.");
     }
 
     /**
      * Runs a single-threaded example of domain and pseudonym operations.
      */
-    private static void runExample(DomainConnector domainConnector, PseudonymConnector pseudonymConnector, PersonConnector personConnector) {
-//        try {
-        String domainName = "TestDomain-" + System.currentTimeMillis();
+    private void runExample() {
+        // Build a domain object
+    	String domainName = "TestDomain-" + System.currentTimeMillis();
         Domain newDomain = new Domain();
         newDomain.setName(domainName);
         newDomain.setPrefix("TD-");
@@ -83,47 +95,53 @@ public class AceClientSpringExample implements CommandLineRunner {
         // Create new domain
         ResponseEntity<Domain> createdDomainResponse = domainConnector.createDomain(newDomain);
         Domain createdDomain = createdDomainResponse.getBody();
+        
+        // Check result
         if (createdDomain != null && createdDomainResponse.getStatusCode().is2xxSuccessful()) {
-            log.info("Created domain '{}'", domainName);
+            log.info("Successfully created domain '{}'.", domainName);
         } else {
-            throw new RuntimeException("Domain creation not successful for '" + domainName + "'");
+            throw new RuntimeException("Domain creation not successful for '" + domainName + "'.");
         }
 
         // Retrieve and log the created domain
         ResponseEntity<Domain> fetchedDomainResponse = domainConnector.getDomain(domainName);
         Domain fetchedDomain = fetchedDomainResponse.getBody();
-        log.info("The created domain is: {}", fetchedDomain);
+        log.info("The newly created domain fetched from TrustDeck: {}.", fetchedDomain);
 
-        // Prepare pseudonym object
-        String pseudonymId = "TS-123";
-        String pseudonymIdType = "TS";
+        // Build pseudonym object
+        String pseudonymId = "TestID" + System.currentTimeMillis();
+        String pseudonymIdType = "TestType";
         Pseudonym pseudonym = new Pseudonym();
         pseudonym.setId(pseudonymId);
         pseudonym.setIdType(pseudonymIdType);
         pseudonym.setValidityTime("1 week");
 
         // Create new pseudonym
-        ResponseEntity<List<Pseudonym>> createdPseudonym = pseudonymConnector.createPseudonym(domainName, pseudonym, true);
+        ResponseEntity<Pseudonym[]> createdPseudonym = pseudonymConnector.createPseudonym(domainName, pseudonym, true);
+        
+        // Check result
         if (createdPseudonym != null && createdPseudonym.getStatusCode().is2xxSuccessful()) {
-            log.info("Successfully created pseudonym '{}' in domain '{}'", createdPseudonym.getBody(), domainName);
+            log.info("Successfully created pseudonym '{}' in domain '{}'.", createdPseudonym.getBody(), domainName);
         } else {
-            throw new RuntimeException("Pseudonym creation not successful for '" + domainName + "'");
+            throw new RuntimeException("Pseudonym creation not successful for '" + domainName + "'.");
         }
 
         // Delete the created pseudonym
         ResponseEntity<Void> deletePsnResponse = pseudonymConnector.deletePseudonym(domainName, pseudonymId, pseudonymIdType, null);
+        
+        // Check result
         if (deletePsnResponse.getStatusCode().is2xxSuccessful()) {
-            log.info("Deleted pseudonym '{}' in domain '{}' successfully", pseudonymId, domainName);
+            log.info("Successfully deleted pseudonym '{}' in domain '{}'.", pseudonymId, domainName);
         } else {
-            throw new RuntimeException("Pseudonym deletion not successful for '" + pseudonymId + "' in domain '" + domainName + "'");
+            throw new RuntimeException("Pseudonym deletion not successful for '" + pseudonymId + "' in domain '" + domainName + "'.");
         }
 
         // Delete the created domain
         ResponseEntity<Void> deleteDomainResponse = domainConnector.deleteDomain(domainName, true);
         if (deleteDomainResponse.getStatusCode().is2xxSuccessful()) {
-            log.info("Deleted domain '{}' successfully", domainName);
+            log.info("Successfully deleted domain '{}'.", domainName);
         } else {
-            throw new RuntimeException("Domain deletion not successful for '" + domainName + "'");
+            throw new RuntimeException("Domain deletion not successful for '" + domainName + "'.");
         }
 
 
@@ -192,5 +210,19 @@ public class AceClientSpringExample implements CommandLineRunner {
 //
 //}
 
+    }
+    
+    /**
+     * Helper method to set the configuration parameters 'manually' using the builder.
+     */
+    private void setConfig() {
+    	trustDeckClientConfigBuilder
+	    	.serviceUrl("https://t-trustdeck.charite.de")
+	        .keycloakUrl("https://t-trustdeck.charite.de")
+	        .realm("production")
+	        .clientId("trustdeck")
+	        .clientSecret("1h6T3Dnx45hrd4pgv7YdcIfP9GRarbpN")
+	        .userName("test")
+	        .password("test");
     }
 }

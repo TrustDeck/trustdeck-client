@@ -1,65 +1,76 @@
+/*
+ * Trust Deck Client Library
+ * Copyright 2025 TrustDeck Team
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.trustdeck.ace.client.service;
 
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.KeycloakBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.trustdeck.ace.client.config.TrustDeckClientConfig;
 import org.trustdeck.ace.client.model.Person;
-import org.trustdeck.ace.client.util.AceClientUtil;
+import org.trustdeck.ace.client.util.TrustDeckClientUtil;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * A connector library for programmatic interaction with the person management endpoints
+ * of the KING registration service in TrustDeck.
+ * Provides methods for person operations (create, read, update, delete).
+ * 
+ * @author Chethan Nagaraj, Armin Müller
+ */
 @Slf4j
+@Component
 public class PersonConnector {
 
-    private final String serviceUrl;
-    private final RestTemplate restTemplate;
-    private final Keycloak keycloakClient;
-    private final AceClientUtil aceClientUtil;
+	/** Enables access to the configuration variables. */
+	@Autowired
+	private TrustDeckClientConfig trustDeckClientConfig;
+	
+	/** Enables access to utility methods. */
+	@Autowired
+	private TrustDeckClientUtil util;
 
-    public PersonConnector(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret, String userName, String password) {
-        this.serviceUrl = serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/";
-        this.restTemplate = new RestTemplate();
-        this.aceClientUtil = new AceClientUtil();
-
+    /**
+     * Creates a new person object.
+     * 
+     * @param person the person object to send
+     * @return an empty response
+     */
+    public ResponseEntity<Void> createPerson(Person person) {
         try {
-            this.keycloakClient = KeycloakBuilder.builder()
-                    .serverUrl(keycloakUrl)
-                    .realm(realm)
-                    .clientId(clientId)
-                    .clientSecret(clientSecret)
-                    .username(userName)
-                    .password(password)
-                    .grantType("password")
-                    .build();
-            log.info("Successfully initialized Keycloak client at {} under realm: {} and client: {}", keycloakUrl, realm, clientId);
-            aceClientUtil.ensureValidTokenOrRefresh(keycloakClient);
-        } catch (Exception e) {
-            throw new RuntimeException("Keycloak client could not be initialized", e);
-        }
-    }
-
-    // src/main/java/org/trustdeck/ace/client/service/PersonConnector.java
-    public ResponseEntity<Void> createPerson(Person newPerson) {
-        try {
-            String url = serviceUrl + "api/registration/person";
-            HttpEntity<Person> request = new HttpEntity<>(newPerson, aceClientUtil.createHeaders(keycloakClient));
-            ResponseEntity<Void> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    request,
-                    Void.class
-            );
-            log.info("Person created successfully: {}", newPerson);
-            return response;
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
+                    .path("api/registration/person")
+                    .toUriString();
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.POST, util.createRequestEntity(person), Void.class);
         } catch (Exception e) {
             if (e.getMessage() != null && e.getMessage().contains("401")) {
                 throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
             }
+            
             throw new RuntimeException("Failed to create person: " + e.getMessage(), e);
         }
     }
 
-    // http://localhost:8080/api/registration/person?q=Maria
+    //TODO: add all methods
  }
