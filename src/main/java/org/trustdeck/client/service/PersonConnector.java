@@ -73,5 +73,33 @@ public class PersonConnector {
         }
     }
 
+    /**
+     * Searches for person objects in TrustDeck.
+     * 
+     * @param query the term to search for
+     * @return an array of persons found for the search term
+     */
+    public ResponseEntity<Person[]> searchPersons(String query) {
+        try {
+        	// Build request URL
+        	String serviceUrl = trustDeckClientConfig.getServiceUrl();
+            String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
+                    .path("api/registration/person")
+                    .queryParam("q", query)
+                    .toUriString();
+            
+            // Build and send request
+            return new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Person[].class);
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("401")) {
+                throw new RuntimeException("Authorisation issue, please verify token: " + e.getMessage(), e);
+            }
+            
+            throw new RuntimeException("Failed to search persons: " + e.getMessage(), e);
+        }
+    }
+    
+    
+
     //TODO: add all methods
  }

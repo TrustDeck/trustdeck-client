@@ -9,7 +9,7 @@
 
 	<groupId>org.trustdeck</groupId>
 	<artifactId>client</artifactId>
-	<version>0.1.0-BETA</version>
+	<version>0.2.0-BETA</version>
 	<packaging>jar</packaging>
 	<name>TrustDeck Client Library</name>
 	<description>A client library for interacting with the TrustDeck services.</description>
@@ -72,6 +72,14 @@
 		</dependency>
 	</dependencies>
 
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>GitHub Packages</name>
+			<url>https://maven.pkg.github.com/TrustDeck/trustdeck-client</url>
+		</repository>
+	</distributionManagement>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -113,7 +121,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
+			<!--<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<executions>
@@ -124,7 +132,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin>-->
 		</plugins>
 	</build>
 </project>

@@ -24,7 +24,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.ResponseEntity;
 import org.trustdeck.client.config.TrustDeckClientConfigBuilder;
+import org.trustdeck.client.model.Algorithm;
 import org.trustdeck.client.model.Domain;
+import org.trustdeck.client.model.Person;
 import org.trustdeck.client.model.Pseudonym;
 import org.trustdeck.client.service.DomainConnector;
 import org.trustdeck.client.service.PersonConnector;
@@ -143,8 +145,38 @@ public class TrustDeckClientExample implements CommandLineRunner {
         } else {
             throw new RuntimeException("Domain deletion not successful for '" + domainName + "'.");
         }
-
-
+        
+        // Build basic algorithm object
+        Algorithm algo = new Algorithm();
+        algo.setName("RANDOM_NUM");
+        
+        // Build person object
+        String identifier = "" + System.currentTimeMillis();
+        Person person = new Person();
+        person.setFirstName("Max");
+        person.setLastName("Mustermann");
+        person.setAdministrativeGender("M");
+        person.setDateOfBirth("1970-01-01");
+        person.setIdentifier(identifier);
+        person.setAlgorithm(algo);
+        
+        // Create person
+        ResponseEntity<Void> createPersonResponse = personConnector.createPerson(person);
+        if (createPersonResponse.getStatusCode().is2xxSuccessful()) {
+            log.info("Successfully created person '{}'.", person);
+        } else {
+            throw new RuntimeException("Creating person not successful for '" + person + "'.");
+        }
+        
+        // Search person
+        ResponseEntity<Person[]> searchPersonResponse = personConnector.searchPersons(identifier);
+        Person foundPerson = searchPersonResponse.getBody()[0];
+        
+        if (foundPerson!= null && searchPersonResponse.getStatusCode().is2xxSuccessful()) {
+            log.info("Successfully searched person '{}'.", foundPerson);
+        } else {
+            throw new RuntimeException("Searching person not successful for '" + identifier + "'.");
+        }
 
         /**
          *  A typical HDP/DIZ workflow ( IN dev)
