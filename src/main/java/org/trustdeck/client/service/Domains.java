@@ -19,6 +19,7 @@ package org.trustdeck.client.service;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.http.HttpMethod;
@@ -85,7 +86,7 @@ public class Domains {
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
-    		return List.of(response.getBody());
+    		return Arrays.asList(response.getBody());
     	} else {
     		log.debug("Unexpected status code in response: " + response.getStatusCode());
     		return null;

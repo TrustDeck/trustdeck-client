@@ -30,6 +30,7 @@ import org.trustdeck.client.config.TrustDeckClientConfig;
 import org.trustdeck.client.model.Pseudonym;
 import org.trustdeck.client.util.TrustDeckClientUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -90,7 +91,7 @@ public class Pseudonyms {
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.CREATED) {
-    		return List.of(response.getBody());
+    		return Arrays.asList(response.getBody());
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
     		log.debug("The domain \"" + domainName + "\" was not found.");
     		return null;
@@ -321,7 +322,7 @@ public class Pseudonyms {
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
-    		return List.of(response.getBody());
+    		return Arrays.asList(response.getBody());
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
     		log.debug("Domain \"" + domainName + "\" was not found.");
     		return null;

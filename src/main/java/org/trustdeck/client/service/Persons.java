@@ -17,6 +17,7 @@
 
 package org.trustdeck.client.service;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.http.HttpMethod;
@@ -131,10 +132,10 @@ public class Persons {
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
-    		return List.of(response.getBody());
+    		return Arrays.asList(response.getBody());
     	} else if (response.getStatusCode() == HttpStatus.PARTIAL_CONTENT) {
     		log.debug("The search for persons returned too many results and was therefore truncated.");
-    		return List.of(response.getBody());
+    		return Arrays.asList(response.getBody());
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
     		log.debug("The query found no persons.");
     		return null;

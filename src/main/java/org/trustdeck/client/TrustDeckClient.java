@@ -61,7 +61,6 @@ public class TrustDeckClient {
 		this.domains = new Domains(config, util);
 		this.pseudonyms = new Pseudonyms(config, util);
 		this.persons = new Persons(config, util);
-		
 	}
 
 	/**

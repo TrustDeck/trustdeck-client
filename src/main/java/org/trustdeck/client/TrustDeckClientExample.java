@@ -122,7 +122,7 @@ public class TrustDeckClientExample {
         }
         
         // Search person
-        Person foundPerson = trustDeck.persons().searchPersons(identifier).getFirst();
+        Person foundPerson = trustDeck.persons().searchPersons(identifier).get(0);
         
         if (foundPerson!= null && foundPerson.getIdentifier().equals(identifier)) {
             log.info("Successfully found person '{}'.", foundPerson);

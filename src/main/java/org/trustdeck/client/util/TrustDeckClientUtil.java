@@ -30,8 +30,14 @@ import org.trustdeck.client.service.TrustDeckTokenService;
  */
 public class TrustDeckClientUtil {
 	
+	/** Enables access to the token handling service. */
 	private TrustDeckTokenService tokenService;
 	
+	/**
+	 * Constructor that creates an instance of the helper class.
+	 * 
+	 * @param tokenService an instance of the token handling service
+	 */
 	public TrustDeckClientUtil(TrustDeckTokenService tokenService) {
 		this.tokenService = tokenService;
 	}
