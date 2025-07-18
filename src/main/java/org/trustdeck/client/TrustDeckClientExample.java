@@ -18,44 +18,19 @@
 package org.trustdeck.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.http.ResponseEntity;
-import org.trustdeck.client.config.TrustDeckClientConfigBuilder;
+import org.trustdeck.client.config.TrustDeckClientConfig;
 import org.trustdeck.client.model.Algorithm;
 import org.trustdeck.client.model.Domain;
 import org.trustdeck.client.model.Person;
 import org.trustdeck.client.model.Pseudonym;
-import org.trustdeck.client.service.DomainConnector;
-import org.trustdeck.client.service.PersonConnector;
-import org.trustdeck.client.service.PseudonymConnector;
 
 /**
  * Example demonstrating usage of the TrustDeck Client Library.
  * 
  * @author Chethan Nagaraj, Armin Müller
  */
-@SpringBootApplication
 @Slf4j
-public class TrustDeckClientExample implements CommandLineRunner {
-
-	/**	Enables access to the domain methods. */
-	@Autowired
-	private DomainConnector domainConnector;
-
-	/**	Enables access to the pseudonym methods. */
-	@Autowired
-	private PseudonymConnector pseudonymConnector;
-
-	/**	Enables access to the person methods. */
-	@Autowired
-	private PersonConnector personConnector;
-
-	/**	Enables access to the configuration builder. */
-	@Autowired
-	private TrustDeckClientConfigBuilder trustDeckClientConfigBuilder;
+public class TrustDeckClientExample {
 
 	/**
 	 * Entry point into the example.
@@ -63,31 +38,21 @@ public class TrustDeckClientExample implements CommandLineRunner {
 	 * @param args
 	 */
     public static void main(String[] args) {
-        SpringApplication.run(TrustDeckClientExample.class, args);
-    }
-
-    /**
-     * Method to run the example.
-     */
-    @Override
-    public void run(String... args) {
         log.info("Starting TrustDeck Client Library example...");
-        log.info("--- Using config from application.yml.");
-        runExample();
-        log.info("Finished TrustDeck Client Library example.");
-
-        log.info("");
-        log.info("Starting TrustDeck Client Library example...");
-        log.info("--- Using manually set config.");
-        setConfig();
-        runExample();
-        log.info("Finished TrustDeck Client Library example.");
-    }
-
-    /**
-     * Runs a single-threaded example of domain and pseudonym operations.
-     */
-    private void runExample() {
+        
+        // Set config
+        TrustDeckClientConfig config = new TrustDeckClientConfig()
+        		.serviceUrl("https://trustdeck.server.com")
+    			.keycloakUrl("https://keycloak.server.com")
+    			.realm("production")
+    			.clientId("trustdeck")
+    			.clientSecret("clientSecret")
+    			.userName("testuser")
+    			.password("testuserpassword");
+        
+        // Create client instance
+        TrustDeckClient trustDeck = new TrustDeckClient(config);
+        
         // Build a domain object
     	String domainName = "TestDomain-" + System.currentTimeMillis();
         Domain newDomain = new Domain();
@@ -95,19 +60,14 @@ public class TrustDeckClientExample implements CommandLineRunner {
         newDomain.setPrefix("TD-");
 
         // Create new domain
-        ResponseEntity<Domain> createdDomainResponse = domainConnector.createDomain(newDomain);
-        Domain createdDomain = createdDomainResponse.getBody();
-        
-        // Check result
-        if (createdDomain != null && createdDomainResponse.getStatusCode().is2xxSuccessful()) {
+        if (trustDeck.domains().createDomain(newDomain)) {
             log.info("Successfully created domain '{}'.", domainName);
         } else {
-            throw new RuntimeException("Domain creation not successful for '" + domainName + "'.");
+        	log.warn("Failed creating domain '{}'.", domainName);
         }
 
         // Retrieve and log the created domain
-        ResponseEntity<Domain> fetchedDomainResponse = domainConnector.getDomain(domainName);
-        Domain fetchedDomain = fetchedDomainResponse.getBody();
+        Domain fetchedDomain = trustDeck.domains().getDomain(domainName);
         log.info("The newly created domain fetched from TrustDeck: {}.", fetchedDomain);
 
         // Build pseudonym object
@@ -119,31 +79,25 @@ public class TrustDeckClientExample implements CommandLineRunner {
         pseudonym.setValidityTime("1 week");
 
         // Create new pseudonym
-        ResponseEntity<Pseudonym[]> createdPseudonym = pseudonymConnector.createPseudonym(domainName, pseudonym, true);
-        
-        // Check result
-        if (createdPseudonym != null && createdPseudonym.getStatusCode().is2xxSuccessful()) {
-            log.info("Successfully created pseudonym '{}' in domain '{}'.", createdPseudonym.getBody(), domainName);
+        Pseudonym createdPseudonym = trustDeck.pseudonyms().createPseudonym(domainName, pseudonym, true);
+        if (createdPseudonym != null) {
+            log.info("Successfully created pseudonym '{}' in domain '{}'.", createdPseudonym, domainName);
         } else {
-            throw new RuntimeException("Pseudonym creation not successful for '" + domainName + "'.");
+        	log.warn("Failed creating pseudonym '{}' in domain '{}'.", pseudonym, domainName);
         }
 
         // Delete the created pseudonym
-        ResponseEntity<Void> deletePsnResponse = pseudonymConnector.deletePseudonym(domainName, pseudonymId, pseudonymIdType, null);
-        
-        // Check result
-        if (deletePsnResponse.getStatusCode().is2xxSuccessful()) {
-            log.info("Successfully deleted pseudonym '{}' in domain '{}'.", pseudonymId, domainName);
+        if (trustDeck.pseudonyms().deletePseudonym(domainName, pseudonymId, pseudonymIdType, null)) {
+            log.info("Successfully deleted pseudonym with id '{}' in domain '{}'.", pseudonymId, domainName);
         } else {
-            throw new RuntimeException("Pseudonym deletion not successful for '" + pseudonymId + "' in domain '" + domainName + "'.");
+        	log.info("Failed deleting pseudonym with id '{}' in domain '{}'.", pseudonymId, domainName);
         }
 
         // Delete the created domain
-        ResponseEntity<Void> deleteDomainResponse = domainConnector.deleteDomain(domainName, true);
-        if (deleteDomainResponse.getStatusCode().is2xxSuccessful()) {
+        if (trustDeck.domains().deleteDomain(domainName, true)) {
             log.info("Successfully deleted domain '{}'.", domainName);
         } else {
-            throw new RuntimeException("Domain deletion not successful for '" + domainName + "'.");
+        	log.warn("Failed deleting domain '{}'.", domainName);
         }
         
         // Build basic algorithm object
@@ -161,100 +115,21 @@ public class TrustDeckClientExample implements CommandLineRunner {
         person.setAlgorithm(algo);
         
         // Create person
-        ResponseEntity<Void> createPersonResponse = personConnector.createPerson(person);
-        if (createPersonResponse.getStatusCode().is2xxSuccessful()) {
+        if (trustDeck.persons().createPerson(person)) {
             log.info("Successfully created person '{}'.", person);
         } else {
-            throw new RuntimeException("Creating person not successful for '" + person + "'.");
+        	log.warn("Failed creating person '{}'.", person);
         }
         
         // Search person
-        ResponseEntity<Person[]> searchPersonResponse = personConnector.searchPersons(identifier);
-        Person foundPerson = searchPersonResponse.getBody()[0];
+        Person foundPerson = trustDeck.persons().searchPersons(identifier).getFirst();
         
-        if (foundPerson!= null && searchPersonResponse.getStatusCode().is2xxSuccessful()) {
-            log.info("Successfully searched person '{}'.", foundPerson);
+        if (foundPerson!= null && foundPerson.getIdentifier().equals(identifier)) {
+            log.info("Successfully found person '{}'.", foundPerson);
         } else {
-            throw new RuntimeException("Searching person not successful for '" + identifier + "'.");
+        	log.warn("Failed finding person with identifier '{}'.", identifier);
         }
 
-        /**
-         *  A typical HDP/DIZ workflow ( IN dev)
-         *  Store basic patient data with ID/pseudonym.
-         *  Create a domain.
-         * 	Generate a secondary/tertiary pseudonym in the domain for an existing pseudonym.
-         */
-//
-//            // Prepare Person and Domain DTOs
-//            Person newPerson = new Person();
-//            Algorithm algorithm = new Algorithm();
-//            algorithm.setName("RANDOM_NUM");
-//            newPerson.setId(123);
-//            newPerson.setFirstName("John");
-//            newPerson.setLastName("Doe");
-//            newPerson.setAdministrativeGender("M");
-//            newPerson.setAlgorithm(algorithm);
-//
-//            String domainName = "TestDomain-" + System.currentTimeMillis();
-//            Domain testDomain = new Domain();
-//            testDomain.setName(domainName);
-//            testDomain.setPrefix("TD-");
-//
-//            // 1.  Create new Person
-//            ResponseEntity<Void> personCreationResponse = personConnector.createPerson(newPerson);
-//            HttpStatusCode personCreationStatus = personCreationResponse.getStatusCode();
-//
-//            if (personCreationStatus.is2xxSuccessful()) {
-//                log.info("Person created successfully with status code: {}", personCreationStatus.value());
-//            } else {
-//                throw new RuntimeException("Person creation failed with status code: " + personCreationStatus.value());
-//            }
-//
-//            // 2 . Create new domain
-//            ResponseEntity<Domain> testDomainResponse = domainConnector.createDomain(testDomain);
-//            Domain createdTestDomain = testDomainResponse.getBody();
-//            if (createdTestDomain != null) {
-//                log.info("Created domain '{}'", domainName);
-//            } else {
-//                throw new RuntimeException("Domain creation not successful for '" + domainName + "'");
-//            }
-//
-
-
-//            // retrieve the id and idtype
-//            String identifier = personConnector.getPerson
-//
-//            // 3. Generate a secondary/tertiary pseudonym in the domain for an existing pseudonym.
-//
-//            Pseudonym secondaryPseudonym = new Pseudonym();
-//            secondaryPseudonym.setId(); //
-//            secondaryPseudonym.setIdType();
-//
-//            ResponseEntity<List<Pseudonym>> secondaryPsnResponse = pseudonymConnector.createPseudonym(
-//                    createdTestDomain.getName(), secondaryPseudonym, true);
-//
-//
-//
-//        } catch (Exception e) {
-//            log.error("Error processing request: {}", e.getMessage(), e);
-//        }
-//    }
-//
-//}
-
-    }
-    
-    /**
-     * Helper method to set the configuration parameters 'manually' using the builder.
-     */
-    private void setConfig() {
-    	trustDeckClientConfigBuilder    	
-	    	.serviceUrl("https://trustdeck.server.com")
-			.keycloakUrl("https://keycloak.server.com")
-			.realm("production")
-			.clientId("trustdeck")
-			.clientSecret("clientSecret")
-			.userName("testuser")
-			.password("testuserpassword");
+        log.info("Finished TrustDeck Client Library example.");
     }
 }

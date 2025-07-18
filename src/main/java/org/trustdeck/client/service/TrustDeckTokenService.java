@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 
-package org.trustdeck.client.config;
+package org.trustdeck.client.service;
 
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.token.TokenManager;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.trustdeck.client.config.TrustDeckClientConfig;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
  * 
  * @author Armin Müller
  */
-@Service
 @Slf4j
 public class TrustDeckTokenService {
 
@@ -41,19 +39,27 @@ public class TrustDeckTokenService {
     private final Object tokenLock = new Object();
 
     /** Enables access to the TrustDeck configuration. */
-    @Autowired
     private TrustDeckClientConfig trustDeckClientConfig;
+    
+    /**
+     * Constructor that also initializes the token manager.
+     * 
+     * @param config the configuration for this instance
+     */
+    public TrustDeckTokenService(TrustDeckClientConfig config) {
+    	this.trustDeckClientConfig = config;
+    	initializeTokenManager();
+    }
 
     /**
      * This method returns a valid access token for authentication 
      * against TrustDeck in a thread-safe manner.
-     * It initializes the token manager if and refreshes the token if necessary.
+     * It refreshes the token if necessary.
      * 
      * @return a valid access token as a String
      */
 	public String authenticate() {
-        // Ensure that a working token manager is available and that it can produce a non-expired access token
-    	initializeTokenManagerIfNecessary();
+        // Ensure that the token manager can produce a non-expired access token
         refreshTokenIfNecessary();
         
         // Retrieve access token
@@ -66,7 +72,7 @@ public class TrustDeckTokenService {
     /**
      * This method ensures that there is a token manager object available (thread-safe).
      */
-    private void initializeTokenManagerIfNecessary() {
+    private void initializeTokenManager() {
         // To initialize the token manager in a thread-safe way
     	// (and to not initialize it twice), we use double-checked locking
     	if (trustDeckTokenManager == null) {
