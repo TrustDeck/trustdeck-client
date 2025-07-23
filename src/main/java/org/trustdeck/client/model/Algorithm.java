@@ -18,6 +18,8 @@
 package org.trustdeck.client.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -25,6 +27,7 @@ import lombok.Data;
  * 
  * @author Chethan Nagaraj, Armin Müller
  */
+@Builder
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Algorithm {

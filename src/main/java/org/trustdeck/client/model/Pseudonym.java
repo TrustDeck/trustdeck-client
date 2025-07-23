@@ -18,7 +18,7 @@
 package org.trustdeck.client.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -28,17 +28,13 @@ import java.sql.Timestamp;
  * 
  * @author Chethan Nagaraj, Armin Müller
  */
+@Builder
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Pseudonym {
 	
-    /** Identifier of the record. */
-    @NotBlank
-    private String id;
-
-    /** Type of the identifier. */
-    @NotBlank
-    private String idType;
+    /** IdentifierItem of the record. */
+    private IdentifierItem identifierItem;
 
     /** Pseudonym value. */
     private String psn;

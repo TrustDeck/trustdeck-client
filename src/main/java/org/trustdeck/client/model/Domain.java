@@ -19,6 +19,7 @@ package org.trustdeck.client.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
  * 
  * @author Chethan Nagaraj, Armin Müller
  */
+@Builder
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Domain {
