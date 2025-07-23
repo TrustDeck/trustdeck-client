@@ -17,6 +17,7 @@
 
 package org.trustdeck.client.config;
 
+import lombok.Builder;
 import lombok.Getter;
 
 /**
@@ -24,6 +25,7 @@ import lombok.Getter;
  * 
  * @author Armin Müller
  */
+@Builder
 @Getter
 public class TrustDeckClientConfig {
 	
@@ -47,88 +49,4 @@ public class TrustDeckClientConfig {
 
 	/** The user's password for authenticating against Keycloak. */
     private String password;
-	
-    /**
-     * Basic empty constructor.
-     */
-    public TrustDeckClientConfig() {
-    	// Empty by design
-    }
-    
-	/**
-	 * Setter for the service URL for TrustDeck.
-	 * 
-	 * @param serviceUrl the base URL where TrustDeck is located at
-	 * @return the updated TrustDeckClientConfig
-	 */
-	public TrustDeckClientConfig serviceUrl(String serviceUrl) {
-        this.serviceUrl = serviceUrl;
-        return this;
-    }
-
-	/**
-	 * Setter for the Keycloak URL.
-	 * 
-	 * @param keycloakUrl the URL where TrustDeck's Keycloak instance is located at
-	 * @return the updated TrustDeckClientConfig
-	 */
-    public TrustDeckClientConfig keycloakUrl(String keycloakUrl) {
-        this.keycloakUrl = keycloakUrl;
-        return this;
-    }
-
-    /**
-     * Setter for the Keycloak realm.
-     * 
-     * @param realm the name of the Keycloak realm
-     * @return the updated TrustDeckClientConfig
-     */
-    public TrustDeckClientConfig realm(String realm) {
-        this.realm = realm;
-        return this;
-    }
-
-    /**
-     * Setter for the client ID.
-     * 
-     * @param clientId the client ID for authentication against Keycloak
-     * @return the updated TrustDeckClientConfig
-     */
-    public TrustDeckClientConfig clientId(String clientId) {
-        this.clientId = clientId;
-        return this;
-    }
-
-    /**
-     * Setter for the client secret.
-     * 
-     * @param clientSecret the client secret for authentication against Keycloak
-     * @return the updated TrustDeckClientConfig
-     */
-    public TrustDeckClientConfig clientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-        return this;
-    }
-
-    /**
-     * Setter for the username.
-     * 
-     * @param userName the username for authentication against Keycloak
-     * @return the updated TrustDeckClientConfig
-     */
-    public TrustDeckClientConfig userName(String userName) {
-        this.userName = userName;
-        return this;
-    }
-
-    /**
-     * Setter for the user password.
-     * 
-     * @param password the user's password for authentication against Keycloak
-     * @return the updated TrustDeckClientConfig
-     */
-    public TrustDeckClientConfig password(String password) {
-        this.password = password;
-        return this;
-    }
 }
