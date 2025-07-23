@@ -30,7 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.trustdeck.client.config.TrustDeckClientConfig;
 import org.trustdeck.client.model.Domain;
-import org.trustdeck.client.util.TrustDeckClientUtil;
+import org.trustdeck.client.util.TrustDeckRequestUtil;
 
 /**
  * A connector library for programmatic interaction with the domain management endpoints
@@ -45,18 +45,18 @@ public class Domains {
 	private TrustDeckClientConfig trustDeckClientConfig;
 	
 	/** Enables access to utility methods. */
-	private TrustDeckClientUtil util;
+	private TrustDeckRequestUtil util;
 
 	/**
 	 * Constructor for a connector handling domain-specific requests.
 	 * Initializes the config and the utility object.
 	 * 
 	 * @param config the configuration for this TrustDeck connection
-	 * @param trustDeckClientUtil the helper object handling authentication and some request building tasks 
+	 * @param trustDeckRequestUtil the helper object handling authentication and some request building tasks 
 	 */
-	public Domains(TrustDeckClientConfig config, TrustDeckClientUtil trustDeckClientUtil) {
+	public Domains(TrustDeckClientConfig config, TrustDeckRequestUtil trustDeckRequestUtil) {
 		this.trustDeckClientConfig = config;
-		this.util = trustDeckClientUtil;
+		this.util = trustDeckRequestUtil;
 	}
 	
     /**
@@ -64,7 +64,7 @@ public class Domains {
      *
      * @return list of domain objects or {@code null} when unsuccessful
      */
-    public List<Domain> getAllDomains() {
+    public List<Domain> getAll() {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -99,7 +99,7 @@ public class Domains {
      * @param domainName the name of the domain
      * @return the requested domain or {@code null} when unsuccessful
      */
-    public Domain getDomain(String domainName) {
+    public Domain get(String domainName) {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -139,7 +139,7 @@ public class Domains {
      * @param attributeName the name of the attribute to retrieve
      * @return the requested domain attribute as a String or {@code null} when unsuccessful
      */
-    public String getDomainAttribute(String domainName, String attributeName) {
+    public String getAttribute(String domainName, String attributeName) {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -147,9 +147,9 @@ public class Domains {
                 .toUriString();
     	
         // Build and send request
-        ResponseEntity<Domain> response = null;
+        ResponseEntity<String> response = null;
     	try {
-            response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Domain.class);
+            response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), String.class);
         } catch (RestClientException e) {
             log.error("Retrieving domain attribute failed: " + e.getMessage());
             if (log.isTraceEnabled()) {
@@ -161,7 +161,7 @@ public class Domains {
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
-    		return util.extractAttributeOutOfDomain(response.getBody(), attributeName);
+    		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
     		log.debug("The domain \"" + domainName + "\" was not found.");
     		return null;
@@ -180,7 +180,7 @@ public class Domains {
      * @param domain the domain to create
      * @return {@code true} when the creation was successful, {@code false} otherwise
      */
-    public boolean createDomain(Domain domain) {
+    public boolean create(Domain domain) {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -227,7 +227,7 @@ public class Domains {
      * @param domain the domain to create
      * @return {@code true} when the creation was successful, {@code false} otherwise
      */
-    public boolean createDomainComplete(Domain domain) {
+    public boolean createComplete(Domain domain) {
     	// Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -275,7 +275,7 @@ public class Domains {
      * @param domain the updated domain data
      * @return {@code true} when the update was successful, {@code false} otherwise
      */
-    public boolean updateDomain(String domainName, Domain domain) {
+    public boolean update(String domainName, Domain domain) {
     	// Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -319,7 +319,7 @@ public class Domains {
      * @param recursive whether to apply changes recursively to sub-domains
      * @return {@code true} when the update was successful, {@code false} otherwise
      */
-    public boolean updateDomainComplete(String domainName, Domain domain, boolean recursive) {
+    public boolean updateComplete(String domainName, Domain domain, boolean recursive) {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -369,7 +369,7 @@ public class Domains {
      * @param recursive whether to delete sub-domains recursively
      * @return {@code true} when the deletion was successful, {@code false} otherwise
      */
-    public boolean deleteDomain(String domainName, boolean recursive) {
+    public boolean delete(String domainName, boolean recursive) {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")

@@ -22,7 +22,7 @@ import org.trustdeck.client.service.Domains;
 import org.trustdeck.client.service.Persons;
 import org.trustdeck.client.service.Pseudonyms;
 import org.trustdeck.client.service.TrustDeckTokenService;
-import org.trustdeck.client.util.TrustDeckClientUtil;
+import org.trustdeck.client.util.TrustDeckRequestUtil;
 
 import lombok.Getter;
 
@@ -39,13 +39,13 @@ public class TrustDeckClient {
 
 	/** Enables access to utility functions. */
 	@Getter
-	private TrustDeckClientUtil util;
+	private TrustDeckRequestUtil util;
+	
+	/** Enables access to the config parameters. */
+	private TrustDeckClientConfig config;
 
 	/** Connector for the domain-scope. */
 	private Domains domains;
-
-	/** Connector for the pseudonym-scope. */
-	private Pseudonyms pseudonyms;
 
 	/** Connector for the person-scope. */
 	private Persons persons;
@@ -56,10 +56,10 @@ public class TrustDeckClient {
 	 * @param config the configuration for this client instance
 	 */
 	public TrustDeckClient(TrustDeckClientConfig config) {
+		this.config = config;
 		this.tokenService = new TrustDeckTokenService(config);
-		this.util = new TrustDeckClientUtil(tokenService);
+		this.util = new TrustDeckRequestUtil(tokenService);
 		this.domains = new Domains(config, util);
-		this.pseudonyms = new Pseudonyms(config, util);
 		this.persons = new Persons(config, util);
 	}
 
@@ -77,8 +77,8 @@ public class TrustDeckClient {
 	 * 
 	 * @return the pseudonym connector
 	 */
-	public Pseudonyms pseudonyms() {
-		return this.pseudonyms;
+	public Pseudonyms pseudonyms(String domainName) {
+		return new Pseudonyms(config, util, domainName);
 	}
 
 	/**
