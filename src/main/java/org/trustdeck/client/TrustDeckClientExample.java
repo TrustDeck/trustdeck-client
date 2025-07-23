@@ -18,9 +18,14 @@
 package org.trustdeck.client;
 
 import lombok.extern.slf4j.Slf4j;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
 import org.trustdeck.client.config.TrustDeckClientConfig;
 import org.trustdeck.client.model.Algorithm;
 import org.trustdeck.client.model.Domain;
+import org.trustdeck.client.model.IdentifierItem;
 import org.trustdeck.client.model.Person;
 import org.trustdeck.client.model.Pseudonym;
 
@@ -40,94 +45,121 @@ public class TrustDeckClientExample {
     public static void main(String[] args) {
         log.info("Starting TrustDeck Client Library example...");
         
-        // Set config
-        TrustDeckClientConfig config = new TrustDeckClientConfig()
+        // Create configuration object
+        TrustDeckClientConfig config = TrustDeckClientConfig.builder()
         		.serviceUrl("https://trustdeck.server.com")
     			.keycloakUrl("https://keycloak.server.com")
     			.realm("production")
     			.clientId("trustdeck")
     			.clientSecret("clientSecret")
     			.userName("testuser")
-    			.password("testuserpassword");
+    			.password("testuserpassword")
+    			.build();
         
         // Create client instance
         TrustDeckClient trustDeck = new TrustDeckClient(config);
         
         // Build a domain object
-    	String domainName = "TestDomain-" + System.currentTimeMillis();
-        Domain newDomain = new Domain();
-        newDomain.setName(domainName);
-        newDomain.setPrefix("TD-");
+        Domain domain = Domain.builder()
+        		.name("TestDomain-" + System.currentTimeMillis())
+        		.prefix("TD-")
+        		.build();
 
         // Create new domain
-        if (trustDeck.domains().createDomain(newDomain)) {
-            log.info("Successfully created domain '{}'.", domainName);
+        if (trustDeck.domains().create(domain)) {
+            log.info("Successfully created domain '{}'.", domain.getName());
         } else {
-        	log.warn("Failed creating domain '{}'.", domainName);
+        	log.warn("Failed creating domain '{}'.", domain.getName());
         }
 
         // Retrieve and log the created domain
-        Domain fetchedDomain = trustDeck.domains().getDomain(domainName);
-        log.info("The newly created domain fetched from TrustDeck: {}.", fetchedDomain);
+        domain = trustDeck.domains().get(domain.getName());
+        log.info("The newly created domain fetched from TrustDeck: {}.", domain);
+        
+        // Build identifier object
+        IdentifierItem identifierItem = IdentifierItem.builder()
+        		.identifier("TestID-" + System.currentTimeMillis())
+        		.idType("TestType")
+        		.build();
 
-        // Build pseudonym object
-        String pseudonymId = "TestID" + System.currentTimeMillis();
-        String pseudonymIdType = "TestType";
-        Pseudonym pseudonym = new Pseudonym();
-        pseudonym.setId(pseudonymId);
-        pseudonym.setIdType(pseudonymIdType);
-        pseudonym.setValidityTime("1 week");
+        // Build a slightly more complex pseudonym object
+        Pseudonym pseudonym = Pseudonym.builder()
+        		.identifierItem(IdentifierItem.builder().identifier("TestID-" + System.currentTimeMillis()).idType("TestType").build())
+        		.validFrom(Timestamp.valueOf(LocalDateTime.now()))
+        		.validityTime("1 week")
+        		.build();
 
-        // Create new pseudonym
-        Pseudonym createdPseudonym = trustDeck.pseudonyms().createPseudonym(domainName, pseudonym, true);
-        if (createdPseudonym != null) {
-            log.info("Successfully created pseudonym '{}' in domain '{}'.", createdPseudonym, domainName);
+        // Create new pseudonym by only providing the identifier item
+        Pseudonym createdPseudonym1 = trustDeck.pseudonyms(domain.getName()).create(identifierItem, true);
+
+        // Create new pseudonym by providing the more complex object
+        Pseudonym createdPseudonym2 = trustDeck.pseudonyms(domain.getName()).create(pseudonym, true);
+        if (createdPseudonym1 != null && createdPseudonym2 != null) {
+            log.info("Successfully created pseudonyms '{}' and '{}' in domain '{}'.", createdPseudonym1, createdPseudonym2, domain.getName());
         } else {
-        	log.warn("Failed creating pseudonym '{}' in domain '{}'.", pseudonym, domainName);
+        	log.warn("Failed creating pseudonym '{}' in domain '{}'.", pseudonym, domain.getName());
         }
 
         // Delete the created pseudonym
-        if (trustDeck.pseudonyms().deletePseudonym(domainName, pseudonymId, pseudonymIdType, null)) {
-            log.info("Successfully deleted pseudonym with id '{}' in domain '{}'.", pseudonymId, domainName);
+        if (trustDeck.pseudonyms(domain.getName()).delete(pseudonym.getIdentifierItem())) {
+            log.info("Successfully deleted pseudonym with id '{}' in domain '{}'.", pseudonym.getIdentifierItem().getIdentifier(), domain.getName());
         } else {
-        	log.info("Failed deleting pseudonym with id '{}' in domain '{}'.", pseudonymId, domainName);
+        	log.info("Failed deleting pseudonym with id '{}' in domain '{}'.", pseudonym.getIdentifierItem().getIdentifier(), domain.getName());
         }
 
         // Delete the created domain
-        if (trustDeck.domains().deleteDomain(domainName, true)) {
-            log.info("Successfully deleted domain '{}'.", domainName);
+        if (trustDeck.domains().delete(domain.getName(), true)) {
+            log.info("Successfully deleted domain '{}'.", domain.getName());
         } else {
-        	log.warn("Failed deleting domain '{}'.", domainName);
+        	log.warn("Failed deleting domain '{}'.", domain.getName());
         }
         
-        // Build basic algorithm object
-        Algorithm algo = new Algorithm();
-        algo.setName("RANDOM_NUM");
-        
         // Build person object
-        String identifier = "" + System.currentTimeMillis();
-        Person person = new Person();
-        person.setFirstName("Max");
-        person.setLastName("Mustermann");
-        person.setAdministrativeGender("M");
-        person.setDateOfBirth("1970-01-01");
-        person.setIdentifier(identifier);
-        person.setAlgorithm(algo);
+        IdentifierItem personIdentifier = IdentifierItem.builder()
+        		.identifier(String.valueOf(System.currentTimeMillis()))
+        		.idType("personTestIdentifier")
+        		.build();
+        	
+        Person person = Person.builder()
+        		.firstName("Max")
+        		.lastName("Mustermann")
+        		.administrativeGender("M")
+        		.dateOfBirth("1970-01-01")
+        		.identifier(personIdentifier.getIdentifier())
+        		.idType(personIdentifier.getIdType())
+        		.algorithm(Algorithm.builder().name("RANDOM_NUM").build())
+        		.build();
         
         // Create person
-        if (trustDeck.persons().createPerson(person)) {
-            log.info("Successfully created person '{}'.", person);
+        Person createdPerson = trustDeck.persons().create(person);
+        if (createdPerson != null) {
+            log.info("Successfully created person '{}'.", createdPerson);
         } else {
         	log.warn("Failed creating person '{}'.", person);
         }
         
         // Search person
-        Person foundPerson = trustDeck.persons().searchPersons(identifier).get(0);
-        
-        if (foundPerson!= null && foundPerson.getIdentifier().equals(identifier)) {
+        Person foundPerson = trustDeck.persons().search(personIdentifier.getIdentifier()).get(0);
+        if (foundPerson!= null && foundPerson.getIdentifier().equals(personIdentifier.getIdentifier())) {
             log.info("Successfully found person '{}'.", foundPerson);
         } else {
-        	log.warn("Failed finding person with identifier '{}'.", identifier);
+        	log.warn("Failed finding person with identifier '{}'.", personIdentifier.getIdentifier());
+        }
+        
+        // Update person
+        person.setFirstName("Erika");
+        Person updatedPerson = trustDeck.persons().update(personIdentifier, person);
+        if (updatedPerson != null) {
+        	log.info("Successfully updated person '{}'.", updatedPerson);
+        } else {
+        	log.warn("Failed updating person with identifier '{}'.", personIdentifier.getIdentifier());
+        }
+        
+        // Delete person
+        if (trustDeck.persons().delete(personIdentifier)) {
+        	log.info("Successfully deleted person '{}'.", person);
+        } else {
+        	log.warn("Failed deleting person with identifier '{}'.", personIdentifier.getIdentifier());
         }
 
         log.info("Finished TrustDeck Client Library example.");
