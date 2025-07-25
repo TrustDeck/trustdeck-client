@@ -170,6 +170,20 @@ public class Pseudonyms {
     public Pseudonym create(IdentifierItem identifierItem, boolean omitPrefix) throws TrustDeckClientLibraryException, TrustDeckResponseException {
         return create(Pseudonym.builder().identifierItem(identifierItem).build(), omitPrefix);
     }
+    
+    /**
+     * Method to create a single pseudonym by only providing an identifier and an idType.
+     * 
+     * @param identifier the identifier
+     * @param idType the identifier's type
+     * @param omitPrefix a flag deciding whether or not to add the domain-specific prefix to the newly generated pseudonym
+     * @return the created pseudonym object, or {@code null} when the request was unsuccessful
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
+     */
+    public Pseudonym create(String identifier, String idType, boolean omitPrefix) throws TrustDeckClientLibraryException, TrustDeckResponseException {
+        return create(Pseudonym.builder().identifierItem(IdentifierItem.builder().identifier(identifier).idType(idType).build()).build(), omitPrefix);
+    }
 
     /**
      * A method to search and link pseudonyms along the pseudonym-chain in the tree.
