@@ -29,6 +29,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.trustdeck.client.config.TrustDeckClientConfig;
+import org.trustdeck.client.exception.TrustDeckClientLibraryException;
+import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.Domain;
 import org.trustdeck.client.util.TrustDeckRequestUtil;
 
@@ -62,9 +64,11 @@ public class Domains {
     /**
      * Gets a list of all domains.
      *
-     * @return list of domain objects or {@code null} when unsuccessful
+     * @return a list of domain objects
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public List<Domain> getAll() {
+    public List<Domain> getAll() throws TrustDeckClientLibraryException, TrustDeckResponseException {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -76,20 +80,15 @@ public class Domains {
     	try {
     		response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Domain[].class);
         } catch (RestClientException e) {
-            log.error("Retrieving all domains failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return null;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Retrieving all domains failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
     		return Arrays.asList(response.getBody());
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return null;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 
@@ -97,9 +96,11 @@ public class Domains {
      * Gets a domain by name.
      *
      * @param domainName the name of the domain
-     * @return the requested domain or {@code null} when unsuccessful
+     * @return the requested domain
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public Domain get(String domainName) {
+    public Domain get(String domainName) throws TrustDeckClientLibraryException, TrustDeckResponseException {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -112,23 +113,17 @@ public class Domains {
     	try {
             response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Domain.class);
         } catch (RestClientException e) {
-            log.error("Retrieving domain failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return null;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Retrieving domain failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
     		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		log.debug("The domain \"" + domainName + "\" was not found.");
-    		return null;
+    		throw new TrustDeckResponseException("The domain \"" + domainName + "\" was not found.", response.getStatusCode());
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return null;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 
@@ -137,9 +132,11 @@ public class Domains {
      *
      * @param domainName the name of the domain
      * @param attributeName the name of the attribute to retrieve
-     * @return the requested domain attribute as a String or {@code null} when unsuccessful
+     * @return the requested attribute as a String or {@code null} when unsuccessful
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public String getAttribute(String domainName, String attributeName) {
+    public String getAttribute(String domainName, String attributeName) throws TrustDeckClientLibraryException, TrustDeckResponseException {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -151,26 +148,20 @@ public class Domains {
     	try {
             response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), String.class);
         } catch (RestClientException e) {
-            log.error("Retrieving domain attribute failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return null;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Retrieving domain attribute failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
     		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		log.debug("The domain \"" + domainName + "\" was not found.");
-    		return null;
+    		throw new TrustDeckResponseException("The domain \"" + domainName + "\" was not found.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.FORBIDDEN) {
     		log.debug("Insufficient rights to read attribute\"" + attributeName + "\" from domain \"" + domainName + "\".");
     		return null;
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return null;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 
@@ -178,9 +169,11 @@ public class Domains {
      * Creates a new domain with a reduced set of attributes.
      *
      * @param domain the domain to create
-     * @return {@code true} when the creation was successful, {@code false} otherwise
+     * @return the created domain when the creation was successful, {@code null} otherwise
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public boolean create(Domain domain) {
+    public Domain create(Domain domain) throws TrustDeckClientLibraryException, TrustDeckResponseException {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -190,34 +183,31 @@ public class Domains {
         // Build and send request
         ResponseEntity<Domain> response = null;
     	try {
-        	response = new RestTemplate().exchange(url, HttpMethod.POST, util.createRequestEntity(domain), Domain.class);
+        	response = new RestTemplate()
+        			.exchange(url, 
+        			HttpMethod.POST, 
+        			util.createRequestEntity(domain), 
+        			Domain.class);
         } catch (RestClientException e) {
-            log.error("Creating domain failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return false;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Creating domain failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
     		log.debug("The domain that was to be inserted was already in the database.");
-    		return true;
+    		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.CREATED) {
-    		return true;
+    		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		log.debug("The parent domain \"" + domain.getSuperDomainName() + "\" was not found.");
-    		return false;
+    		throw new TrustDeckResponseException("The parent domain \"" + domain.getSuperDomainName() + "\" was not found.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.NOT_ACCEPTABLE) {
-    		log.debug("The domain name is violating the URI-validity: \"" + domain.getName() + "\".");
-    		return false;
+    		throw new TrustDeckResponseException("The domain name is violating the URI-validity: \"" + domain.getName() + "\".", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
     		log.debug("Creating the domain failed.");
-    		return false;
+    		return null;
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return false;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 
@@ -225,9 +215,11 @@ public class Domains {
      * Creates a new domain with all attributes.
      *
      * @param domain the domain to create
-     * @return {@code true} when the creation was successful, {@code false} otherwise
+     * @return the created domain when the creation was successful, {@code null} otherwise
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public boolean createComplete(Domain domain) {
+    public Domain createComplete(Domain domain) throws TrustDeckClientLibraryException, TrustDeckResponseException {
     	// Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -239,32 +231,25 @@ public class Domains {
     	try {
     		response = new RestTemplate().exchange(url, HttpMethod.POST, util.createRequestEntity(domain), Domain.class);
         } catch (RestClientException e) {
-            log.error("Creating domain failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return false;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Creating domain failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
     		log.debug("The domain that was to be inserted was already in the database.");
-    		return true;
+    		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.CREATED) {
-    		return true;
+    		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		log.debug("The parent domain \"" + domain.getSuperDomainName() + "\" was not found.");
-    		return false;
+    		throw new TrustDeckResponseException("The parent domain \"" + domain.getSuperDomainName() + "\" was not found.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.NOT_ACCEPTABLE) {
-    		log.debug("The domain name is violating the URI-validity: \"" + domain.getName() + "\".");
-    		return false;
+    		throw new TrustDeckResponseException("The domain name is violating the URI-validity: \"" + domain.getName() + "\".", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
     		log.debug("Creating the domain failed.");
-    		return false;
+    		return null;
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return false;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 
@@ -273,9 +258,11 @@ public class Domains {
      *
      * @param domainName the name of the domain to update
      * @param domain the updated domain data
-     * @return {@code true} when the update was successful, {@code false} otherwise
+     * @return the updated domain when the update was successful, {@code null} otherwise
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public boolean update(String domainName, Domain domain) {
+    public Domain update(String domainName, Domain domain) throws TrustDeckClientLibraryException, TrustDeckResponseException {
     	// Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -284,30 +271,24 @@ public class Domains {
                 .toUriString();
         
         // Build and send request
-        ResponseEntity<String> response = null;
+        ResponseEntity<Domain> response = null;
     	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(domain), String.class);
+    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(domain), Domain.class);
         } catch (RestClientException e) {
-            log.error("Updating domain failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return false;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Updating domain failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
-    		return true;
+    		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		log.debug("The domain that is to be updated (" + domainName + ") was not found.");
-    		return false;
+    		throw new TrustDeckResponseException("The domain that is to be updated (" + domainName + ") was not found.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
     		log.debug("Updating the domain failed.");
-    		return false;
+    		return null;
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return false;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 
@@ -317,9 +298,11 @@ public class Domains {
      * @param domainName the name of the domain to update
      * @param domain the updated domain data
      * @param recursive whether to apply changes recursively to sub-domains
-     * @return {@code true} when the update was successful, {@code false} otherwise
+     * @return the updated domain when the update was successful, {@code null} otherwise
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public boolean updateComplete(String domainName, Domain domain, boolean recursive) {
+    public Domain updateComplete(String domainName, Domain domain, boolean recursive) throws TrustDeckClientLibraryException, TrustDeckResponseException {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -329,36 +312,28 @@ public class Domains {
                 .toUriString();
         
         // Build and send request
-        ResponseEntity<String> response = null;
+        ResponseEntity<Domain> response = null;
     	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(domain), String.class);
+    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(domain), Domain.class);
         } catch (RestClientException e) {
-            log.error("Updating domain failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return false;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Updating domain failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
-    		return true;
+    		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-    		log.debug("The provided salt value was invalid.");
-    		return false;
+    		throw new TrustDeckResponseException("The provided salt value was invalid.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		log.debug("The domain that is to be updated (" + domainName + ") was not found.");
-    		return false;
+    		throw new TrustDeckResponseException("The domain that is to be updated (" + domainName + ") was not found.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.NOT_ACCEPTABLE) {
-    		log.debug("The new domain name is violating the URI-validity: \"" + domainName + "\".");
-    		return false;
+    		throw new TrustDeckResponseException("The new domain name is violating the URI-validity: \"" + domainName + "\".", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
     		log.debug("Creating the domain failed.");
-    		return false;
+    		return null;
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return false;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 
@@ -368,8 +343,10 @@ public class Domains {
      * @param domainName the name of the domain to delete
      * @param recursive whether to delete sub-domains recursively
      * @return {@code true} when the deletion was successful, {@code false} otherwise
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public boolean delete(String domainName, boolean recursive) {
+    public boolean delete(String domainName, boolean recursive) throws TrustDeckClientLibraryException, TrustDeckResponseException {
         // Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -383,38 +360,34 @@ public class Domains {
     	try {
     		response = new RestTemplate().exchange(url, HttpMethod.DELETE, util.createRequestEntity(), Void.class);
         } catch (RestClientException e) {
-            log.error("Deleting domain failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return false;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Deleting domain failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.NO_CONTENT) {
     		return true;
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		log.debug("The domain that is to be deleted (" + domainName + ") was not found.");
-    		return false;
+    		throw new TrustDeckResponseException("The domain that is to be deleted (" + domainName + ") was not found.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
     		log.debug("Deleting the domain failed.");
     		return false;
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return false;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 
     /**
-     * Updates the salt of a domain.
+     * Updates the salt value of a domain.
      *
-     * @param domainName the name of the domain
+     * @param domainName the name of the domain where the salt value should be updated
      * @param newSalt the new salt value
-     * @param allowEmpty whether to allow an empty salt
-     * @return {@code true} when the update was successful, {@code false} otherwise
+     * @param allowEmpty whether to allow an empty salt value
+     * @return the updated domain when the update was successful, {@code null} otherwise
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
      */
-    public boolean updateSalt(String domainName, String newSalt, boolean allowEmpty) {
+    public Domain updateSalt(String domainName, String newSalt, boolean allowEmpty) throws TrustDeckClientLibraryException, TrustDeckResponseException {
     	// Build request URL
     	String serviceUrl = trustDeckClientConfig.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
@@ -424,33 +397,26 @@ public class Domains {
                 .toUriString();
         
         // Build and send request
-        ResponseEntity<Void> response = null;
+        ResponseEntity<Domain> response = null;
     	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(), Void.class);
+    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(), Domain.class);
         } catch (RestClientException e) {
-            log.error("Updating salt failed: " + e.getMessage());
-            if (log.isTraceEnabled()) {
-            	e.printStackTrace();
-            }
-            
-            return false;
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Updating salt failed: " + e.getMessage());
         }
     	
     	// Check response
     	if (response.getStatusCode() == HttpStatus.OK) {
-    		return true;
+    		return response.getBody();
     	} else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-    		log.debug("The provided salt value was invalid.");
-    		return false;
+    		throw new TrustDeckResponseException("The provided salt value was invalid.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		log.debug("The domain for which the updated salt-value was given (" + domainName + "), couldn't be found.");
-    		return false;
+    		throw new TrustDeckResponseException("The domain for which the updated salt-value was given (" + domainName + "), couldn't be found.", response.getStatusCode());
     	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
     		log.debug("Updating the salt failed.");
-    		return false;
+    		return null;
     	} else {
-    		log.debug("Unexpected status code in response: " + response.getStatusCode());
-    		return false;
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
 }
