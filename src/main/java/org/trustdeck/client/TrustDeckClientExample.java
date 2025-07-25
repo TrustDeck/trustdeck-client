@@ -19,7 +19,6 @@ package org.trustdeck.client;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import org.trustdeck.client.config.TrustDeckClientConfig;
@@ -66,7 +65,7 @@ public class TrustDeckClientExample {
         		.build();
 
         // Create new domain
-        if (trustDeck.domains().create(domain)) {
+        if (trustDeck.domains().create(domain) != null) {
             log.info("Successfully created domain '{}'.", domain.getName());
         } else {
         	log.warn("Failed creating domain '{}'.", domain.getName());
@@ -85,10 +84,10 @@ public class TrustDeckClientExample {
         // Build a slightly more complex pseudonym object
         Pseudonym pseudonym = Pseudonym.builder()
         		.identifierItem(IdentifierItem.builder().identifier("TestID-" + System.currentTimeMillis()).idType("TestType").build())
-        		.validFrom(Timestamp.valueOf(LocalDateTime.now()))
+        		.validFrom(LocalDateTime.now())
         		.validityTime("1 week")
         		.build();
-
+        
         // Create new pseudonym by only providing the identifier item
         Pseudonym createdPseudonym1 = trustDeck.pseudonyms(domain.getName()).create(identifierItem, true);
 
@@ -97,7 +96,7 @@ public class TrustDeckClientExample {
         if (createdPseudonym1 != null && createdPseudonym2 != null) {
             log.info("Successfully created pseudonyms '{}' and '{}' in domain '{}'.", createdPseudonym1, createdPseudonym2, domain.getName());
         } else {
-        	log.warn("Failed creating pseudonym '{}' in domain '{}'.", pseudonym, domain.getName());
+        	log.warn("Failed creating pseudonym for '{}' and '{}' in domain '{}'.", pseudonym, identifierItem, domain.getName());
         }
 
         // Delete the created pseudonym
