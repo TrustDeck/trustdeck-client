@@ -18,10 +18,13 @@
 package org.trustdeck.client.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Data Transfer Object (DTO) for pseudonymization records in TrustDeck.
@@ -30,6 +33,8 @@ import java.sql.Timestamp;
  */
 @Builder
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Pseudonym {
 	
@@ -40,13 +45,13 @@ public class Pseudonym {
     private String psn;
 
     /** Start of validity period. */
-    private Timestamp validFrom;
+    private LocalDateTime validFrom;
 
     /** Whether validFrom is inherited from domain. */
     private Boolean validFromInherited;
 
     /** End of validity period. */
-    private Timestamp validTo;
+    private LocalDateTime validTo;
 
     /** Whether validTo is inherited from domain. */
     private Boolean validToInherited;

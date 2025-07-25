@@ -17,8 +17,11 @@
 
 package org.trustdeck.client.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * IdentifierItem object for TrustDeck.
@@ -28,6 +31,9 @@ import lombok.Getter;
  */
 @Builder
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 public class IdentifierItem {
 	
 	/** The identifying string. */
