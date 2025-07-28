@@ -17,7 +17,15 @@
 
 package org.trustdeck.client;
 
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.trustdeck.client.config.TrustDeckClientConfig;
+import org.trustdeck.client.exception.TrustDeckClientLibraryException;
+import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.service.Domains;
 import org.trustdeck.client.service.Persons;
 import org.trustdeck.client.service.Pseudonyms;
@@ -89,4 +97,35 @@ public class TrustDeckClient {
 	public Persons persons() {
 		return this.persons;
 	}
+	
+	/**
+	 * Method to ping TrustDeck (e.g. to see if it's online/reachable).
+	 * 
+	 * @return {@code true} if the ping was successful, {@code false} otherwise
+     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
+	 */
+	public boolean ping() throws TrustDeckClientLibraryException, TrustDeckResponseException {
+    	// Build request URL
+    	String serviceUrl = config.getServiceUrl();
+        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
+                .path("api/ping")
+                .toUriString();
+        
+        // Build and send request
+    	ResponseEntity<Void> response = null;
+    	try {
+            response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Void.class);
+        } catch (RestClientException e) {
+            // Wrap the exception and re-throw
+            throw new TrustDeckClientLibraryException("Pinging TrustDeck failed: " + e.getMessage(), e);
+        }
+    	
+    	// Check response
+    	if (response.getStatusCode() == HttpStatus.OK) {
+    		return true;
+    	} else {
+    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
+    	}
+    }
 }

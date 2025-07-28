@@ -58,6 +58,13 @@ public class TrustDeckClientExample {
         // Create client instance
         TrustDeckClient trustDeck = new TrustDeckClient(config);
         
+        // Check connection to TrustDeck
+        if (trustDeck.ping()) {
+        	log.info("Successfully pinged TrustDeck.");
+        } else {
+        	log.error("Failed to connect to TrustDeck.");
+        }
+        
         // Build a domain object
         Domain domain = Domain.builder()
         		.name("TestDomain-" + System.currentTimeMillis())
@@ -124,6 +131,7 @@ public class TrustDeckClientExample {
         		.lastName("Mustermann")
         		.administrativeGender("M")
         		.dateOfBirth("1970-01-01")
+        		.identifierItem(identifierItem)
         		.identifier(personIdentifier.getIdentifier())
         		.idType(personIdentifier.getIdType())
         		.algorithm(Algorithm.builder().name("RANDOM_NUM").build())
