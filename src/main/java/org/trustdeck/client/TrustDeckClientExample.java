@@ -131,9 +131,7 @@ public class TrustDeckClientExample {
         		.lastName("Mustermann")
         		.administrativeGender("M")
         		.dateOfBirth("1970-01-01")
-        		.identifierItem(identifierItem)
-        		.identifier(personIdentifier.getIdentifier())
-        		.idType(personIdentifier.getIdType())
+        		.identifierItem(personIdentifier)
         		.algorithm(Algorithm.builder().name("RANDOM_NUM").build())
         		.build();
         
@@ -147,7 +145,7 @@ public class TrustDeckClientExample {
         
         // Search person
         Person foundPerson = trustDeck.persons().search(personIdentifier.getIdentifier()).get(0);
-        if (foundPerson!= null && foundPerson.getIdentifier().equals(personIdentifier.getIdentifier())) {
+        if (foundPerson!= null && foundPerson.getIdentifierItem().getIdentifier().equals(personIdentifier.getIdentifier())) {
             log.info("Successfully found person '{}'.", foundPerson);
         } else {
         	log.warn("Failed finding person with identifier '{}'.", personIdentifier.getIdentifier());

@@ -66,8 +66,8 @@ public class Person {
 	/** The country name of the person's address. */
     private String country;
 	
-	/** The identifier for the person. */
-    private String identifier;
+	/** The identifier item for the person. */
+    private IdentifierItem identifierItem;
 	
 	/** The identifier's type. */
     private String idType;
