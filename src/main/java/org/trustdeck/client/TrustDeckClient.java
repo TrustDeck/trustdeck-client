@@ -109,7 +109,7 @@ public class TrustDeckClient {
     	// Build request URL
     	String serviceUrl = config.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/ping")
+                .path("api/pseudonymization/ping")
                 .toUriString();
         
         // Build and send request
