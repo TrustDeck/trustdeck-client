@@ -46,15 +46,16 @@ public class TrustDeckClientExample {
         
         // Create configuration object
         TrustDeckClientConfig config = TrustDeckClientConfig.builder()
-        		.serviceUrl("https://trustdeck.server.com")
-    			.keycloakUrl("https://keycloak.server.com")
-    			.realm("production")
-    			.clientId("trustdeck")
-    			.clientSecret("clientSecret")
-    			.userName("testuser")
-    			.password("testuserpassword")
+        		.serviceUrl("http://localhost:8080")
+    			.keycloakUrl("http://localhost:8081")
+    			.realm("development")
+    			.clientId("ace")
+    			.clientSecret("1h6T3Dnx45hrd4pgv7YdcIfP9GRarbpN")
+    			.userName("test")
+    			.password("test123")
     			.build();
-        
+
+
         // Create client instance
         TrustDeckClient trustDeck = new TrustDeckClient(config);
         
