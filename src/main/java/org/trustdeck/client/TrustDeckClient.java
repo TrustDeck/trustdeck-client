@@ -1,21 +1,22 @@
-/*
- * Trust Deck Client Library
- * Copyright 2025 TrustDeck Team
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
-package org.trustdeck.client;
+		/*
+		 * Trust Deck Client Library
+		 * Copyright 2025 TrustDeck Team
+		 *
+		 * Licensed under the Apache License, Version 2.0 (the "License");
+		 * you may not use this file except in compliance with the License.
+		 * You may obtain a copy of the License at
+		 *
+		 * http://www.apache.org/licenses/LICENSE-2.0
+		 *
+		 * Unless required by applicable law or agreed to in writing, software
+		 * distributed under the License is distributed on an "AS IS" BASIS,
+		 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+		 * See the License for the specific language governing permissions and
+		 * limitations under the License.
+		 */
+
+		package org.trustdeck.client;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -37,24 +38,19 @@ import lombok.Getter;
 
 /**
  * This class encapsulates the connector subclasses.
- * 
+ *
  * @author Armin Müller
  */
 public class TrustDeckClient {
-	
+
 	/** A service handling the authentication. */
 	@Getter
 	private TrustDeckTokenService tokenService;
 
-
-	/** Connector for DB maintenance operations. */
-	@Getter
-	private DBMaintenance dbMaintenance;
-
 	/** Enables access to utility functions. */
 	@Getter
 	private TrustDeckRequestUtil util;
-	
+
 	/** Enables access to the config parameters. */
 	private TrustDeckClientConfig config;
 
@@ -66,7 +62,7 @@ public class TrustDeckClient {
 
 	/**
 	 * Constructor initializing all needed sub-connectors.
-	 * 
+	 *
 	 * @param config the configuration for this client instance
 	 */
 	public TrustDeckClient(TrustDeckClientConfig config) {
@@ -75,12 +71,11 @@ public class TrustDeckClient {
 		this.util = new TrustDeckRequestUtil(tokenService);
 		this.domains = new Domains(config, util);
 		this.persons = new Persons(config, util);
-		this.dbMaintenance = new DBMaintenance(config, util);
 	}
 
 	/**
 	 * Enables access to API methods for the domain-scope.
-	 * 
+	 *
 	 * @return the domain connector
 	 */
 	public Domains domains() {
@@ -89,7 +84,7 @@ public class TrustDeckClient {
 
 	/**
 	 * Enables access to API methods for the pseudonym-scope.
-	 * 
+	 *
 	 * @return the pseudonym connector
 	 */
 	public Pseudonyms pseudonyms(String domainName) {
@@ -98,52 +93,50 @@ public class TrustDeckClient {
 
 	/**
 	 * Enables access to API methods for the person-scope.
-	 * 
+	 *
 	 * @return the person connector
 	 */
 	public Persons persons() {
 		return this.persons;
 	}
 
-
 	/**
 	 * Enables access to DB maintenance operations.
 	 *
-	 *  @return the DBMaintenance connector
+	 * @return the DBMaintenance connector
 	 */
 	public DBMaintenance dbMaintenance() {
-		return this.dbMaintenance;
+		return new DBMaintenance(config, util);
 	}
-	
+
 	/**
 	 * Method to ping TrustDeck (e.g. to see if it's online/reachable).
-	 * 
+	 *
 	 * @return {@code true} if the ping was successful, {@code false} otherwise
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
+	 * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
+	 * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
 	 */
 	public boolean ping() throws TrustDeckClientLibraryException, TrustDeckResponseException {
-    	// Build request URL
-    	String serviceUrl = config.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/ping")
-                .toUriString();
-        
-        // Build and send request
-    	ResponseEntity<Void> response = null;
-    	try {
-            response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Void.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Pinging TrustDeck failed: " + e.getMessage(), e);
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		return true;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+		// Build request URL
+		String serviceUrl = config.getServiceUrl();
+		String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
+				.path("api/ping")
+				.toUriString();
 
+		// Build and send request
+		ResponseEntity<Void> response = null;
+		try {
+			response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Void.class);
+		} catch (RestClientException e) {
+			// Wrap the exception and re-throw
+			throw new TrustDeckClientLibraryException("Pinging TrustDeck failed: " + e.getMessage(), e);
+		}
+
+		// Check response
+		if (response.getStatusCode() == HttpStatus.OK) {
+			return true;
+		} else {
+			throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
+		}
+	}
 }

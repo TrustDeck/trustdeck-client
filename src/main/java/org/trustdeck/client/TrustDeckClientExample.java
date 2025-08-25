@@ -77,7 +77,7 @@ public class TrustDeckClientExample {
         //DBMaintenance
 
         // Setup DBMaintenance service
-        DBMaintenance dBMaintenance = new DBMaintenance(config, trustDeck.getUtil());
+        DBMaintenance dbMaintenance = trustDeck.dbMaintenance();
 
         // Clear tables
         try {
@@ -97,7 +97,7 @@ public class TrustDeckClientExample {
 
         // Get storage usage for a table
         try {
-            String storage = dBMaintenance.getStorage("pseudonym");
+            String storage = dbMaintenance.getStorage("pseudonym");
             log.info("Storage usage for 'pseudonym' table: {}", storage);
         } catch (TrustDeckClientLibraryException e) {
             log.error("Failed to get storage usage: {}", e.getMessage());
