@@ -81,7 +81,7 @@ public class TrustDeckClientExample {
 
         // Clear tables
         try {
-            dBMaintenance.clearTables();
+            dbMaintenance.clearTables();
             log.info("Successfully cleared tables.");
         } catch (TrustDeckClientLibraryException e) {
             log.error("Failed to clear tables: {}", e.getMessage());
@@ -89,7 +89,7 @@ public class TrustDeckClientExample {
 
         // Delete rights and roles for a domain
         try {
-            dBMaintenance.deleteDomainRightsAndRoles(domain);
+            dbMaintenance.deleteDomainRightsAndRoles(domain);
             log.info("Successfully deleted roles for domain '{}'.", domain.getName());
         } catch (TrustDeckClientLibraryException e) {
             log.error("Failed to delete roles: {}", e.getMessage());
