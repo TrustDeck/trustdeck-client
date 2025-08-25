@@ -109,7 +109,7 @@ public class TrustDeckClient {
     	// Build request URL
     	String serviceUrl = config.getServiceUrl();
         String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/pseudonymization/ping")
+                .path("api/ping")
                 .toUriString();
         
         // Build and send request
@@ -128,4 +128,5 @@ public class TrustDeckClient {
     		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
     	}
     }
+
 }
