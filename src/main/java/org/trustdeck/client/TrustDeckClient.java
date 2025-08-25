@@ -29,6 +29,7 @@ import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.service.Domains;
 import org.trustdeck.client.service.Persons;
 import org.trustdeck.client.service.Pseudonyms;
+import org.trustdeck.client.service.DBMaintenance;
 import org.trustdeck.client.service.TrustDeckTokenService;
 import org.trustdeck.client.util.TrustDeckRequestUtil;
 
@@ -44,6 +45,11 @@ public class TrustDeckClient {
 	/** A service handling the authentication. */
 	@Getter
 	private TrustDeckTokenService tokenService;
+
+
+	/** Connector for DB maintenance operations. */
+	@Getter
+	private DBMaintenance dbMaintenance;
 
 	/** Enables access to utility functions. */
 	@Getter
@@ -69,6 +75,7 @@ public class TrustDeckClient {
 		this.util = new TrustDeckRequestUtil(tokenService);
 		this.domains = new Domains(config, util);
 		this.persons = new Persons(config, util);
+		this.dbMaintenance = new DBMaintenance(config, util);
 	}
 
 	/**
@@ -96,6 +103,16 @@ public class TrustDeckClient {
 	 */
 	public Persons persons() {
 		return this.persons;
+	}
+
+
+	/**
+	 * Enables access to DB maintenance operations.
+	 *
+	 *  @return the DBMaintenance connector
+	 */
+	public DBMaintenance dbMaintenance() {
+		return this.dbMaintenance;
 	}
 	
 	/**

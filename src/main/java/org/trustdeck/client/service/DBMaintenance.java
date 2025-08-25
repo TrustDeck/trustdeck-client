@@ -29,6 +29,10 @@ public class DBMaintenance {
      * @throws URISyntaxException
      * @throws HTTPException
      */
+    public DBMaintenance(TrustDeckClientConfig config, TrustDeckRequestUtil util) {
+        this.trustDeckClientConfig = config;
+        this.util = util;
+    }
 
     public void clearTables()  {
 

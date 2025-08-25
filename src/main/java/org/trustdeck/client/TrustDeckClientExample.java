@@ -77,9 +77,7 @@ public class TrustDeckClientExample {
         //DBMaintenance
 
         // Setup DBMaintenance service
-        DBMaintenance dBMaintenance = new DBMaintenance();
-        dBMaintenance.setTrustDeckClientConfig(config) ;
-        dBMaintenance.setUtil(trustDeck.getUtil());
+        DBMaintenance dBMaintenance = new DBMaintenance(config, trustDeck.getUtil());
 
         // Clear tables
         try {
