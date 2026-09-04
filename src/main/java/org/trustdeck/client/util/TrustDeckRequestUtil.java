@@ -44,7 +44,6 @@ public class TrustDeckRequestUtil {
 	/**
 	 * Helper method to create the correct HTTP headers.
 	 * 
-	 * @param tokenService service that handles authentication and token creation
 	 * @return a HTTP entity object containing the necessary headers.
 	 */
     public HttpEntity<?> createRequestEntity() {
@@ -60,7 +59,6 @@ public class TrustDeckRequestUtil {
 	/**
 	 * Helper method to create the correct HTTP headers and to add a body.
 	 * 
-	 * @param tokenService service that handles authentication and token creation
 	 * @param <T> the type of the body object
 	 * @param body the body for this request entity
 	 * @return a HTTP entity object containing the necessary headers and the body.

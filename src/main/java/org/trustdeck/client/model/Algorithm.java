@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * Data Transfer Object (DTO) for algorithms in TrustDeck.
@@ -31,10 +30,11 @@ import lombok.NoArgsConstructor;
  */
 @Builder
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Algorithm {
+	/** Creates an empty algorithm model for JSON binding. */
+	public Algorithm() { }
 
 	/** The (internal) identifier of the algorithm. */
     private Integer id;
@@ -46,29 +46,29 @@ public class Algorithm {
     private String alphabet;
 
 	/** If it's a randomness-based algorithm: how many pseudonyms/identifiers should the algorithm be able to create? */
-    private long randomAlgorithmDesiredSize;
+    private Long randomAlgorithmDesiredSize;
 
 	/** If it's a randomness-based algorithm: which which probability should the creation of a pseudonym/identifier be successful? */
-    private double randomAlgorithmDesiredSuccessProbability;
+    private Double randomAlgorithmDesiredSuccessProbability;
 
 	/** If a counter-based approach is used: the value of the counter. */
-    private long consecutiveValueCounter;
+    private Long consecutiveValueCounter;
 
 	/** The length of the pseudonym/identifier. */
-    private int pseudonymLength;
+    private Integer pseudonymLength;
 
 	/** The character used for padding to the desired length. */
     private String paddingCharacter;
 
 	/** Should a check digit be added to the pseudonym/identifier? */
-    private boolean addCheckDigit;
+    private Boolean addCheckDigit;
 
 	/** Should the given pseudonym-length include the check digit, or should the check digit just be appended. */
-    private boolean lengthIncludesCheckDigit;
+    private Boolean lengthIncludesCheckDigit;
 
 	/** The salt value for this algorithm. */
     private String salt;
 
 	/** The length of the salt-value. */
-    private int saltLength;
+    private Integer saltLength;
 }

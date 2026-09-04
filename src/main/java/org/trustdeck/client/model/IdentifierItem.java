@@ -19,8 +19,7 @@ package org.trustdeck.client.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Data;
 import lombok.ToString;
 
 /**
@@ -30,11 +29,11 @@ import lombok.ToString;
  * @author Armin Müller
  */
 @Builder
-@Getter
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
-@ToString
 public class IdentifierItem {
+	/** Creates an empty identifier model for JSON binding. */
+	public IdentifierItem() { }
 	
 	/** The identifying string. */
 	private String identifier;

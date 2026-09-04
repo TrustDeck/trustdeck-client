@@ -17,25 +17,16 @@
 
 package org.trustdeck.client.exception;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Exception to represent non-recoverable states of the client library.
  * 
  * @author Armin Müller
  */
-@Slf4j
 public class TrustDeckClientLibraryException extends RuntimeException {
 
 	/** Exception UID. */
 	private static final long serialVersionUID = -3008995479625356765L;
-	
-	/** The status code originally returned by the triggering request. */
-	@Getter
-	@Setter
-	private Throwable exception;
 	
 	/** 
 	 * Constructor that also defines a message.
@@ -56,9 +47,6 @@ public class TrustDeckClientLibraryException extends RuntimeException {
 	 * 
 	 */
 	public TrustDeckClientLibraryException(String message, Throwable exception) {
-		super(message);
-		
-		this.exception = exception;
-		log.trace(message, exception);
+		super(message, exception);
 	}
 }

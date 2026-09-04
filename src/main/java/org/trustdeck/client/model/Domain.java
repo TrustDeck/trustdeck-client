@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -33,10 +32,11 @@ import java.time.LocalDateTime;
  */
 @Builder
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Domain {
+	/** Creates an empty domain model for JSON binding. */
+	public Domain() { }
 	
     /** Unique identifier of the domain. */
     private Integer id;
@@ -75,67 +75,16 @@ public class Domain {
     private Boolean enforceEndDateValidityInherited;
 
     /** Algorithm used for pseudonymization. */
-    private String algorithm;
+    private Algorithm algorithm;
 
     /** Whether algorithm is inherited from parent domain. */
     private Boolean algorithmInherited;
-
-    /** Alphabet used for pseudonym generation. */
-    private String alphabet;
-
-    /** Whether alphabet is inherited from parent domain. */
-    private Boolean alphabetInherited;
-
-    /** Desired size for random algorithm. */
-    private Long randomAlgorithmDesiredSize;
-
-    /** Whether randomAlgorithmDesiredSize is inherited. */
-    private Boolean randomAlgorithmDesiredSizeInherited;
-
-    /** Desired success probability for random algorithm. */
-    private Double randomAlgorithmDesiredSuccessProbability;
-
-    /** Whether randomAlgorithmDesiredSuccessProbability is inherited. */
-    private Boolean randomAlgorithmDesiredSuccessProbabilityInherited;
 
     /** Whether multiple pseudonyms are allowed per identifier. */
     private Boolean multiplePsnAllowed;
 
     /** Whether multiplePsnAllowed is inherited. */
     private Boolean multiplePsnAllowedInherited;
-
-    /** Counter for consecutive pseudonym values. */
-    private Long consecutiveValueCounter;
-
-    /** Length of the pseudonym. */
-    private Integer pseudonymLength;
-
-    /** Whether pseudonymLength is inherited. */
-    private Boolean pseudonymLengthInherited;
-
-    /** Character used for padding pseudonyms. */
-    private Character paddingCharacter;
-
-    /** Whether paddingCharacter is inherited. */
-    private Boolean paddingCharacterInherited;
-
-    /** Whether to add a check digit to pseudonyms. */
-    private Boolean addCheckDigit;
-
-    /** Whether addCheckDigit is inherited. */
-    private Boolean addCheckDigitInherited;
-
-    /** Whether length includes the check digit. */
-    private Boolean lengthIncludesCheckDigit;
-
-    /** Whether lengthIncludesCheckDigit is inherited. */
-    private Boolean lengthIncludesCheckDigitInherited;
-
-    /** Salt value for pseudonymization. */
-    private String salt;
-
-    /** Length of the salt. */
-    private Integer saltLength;
 
     /** Description of the domain. */
     private String description;
@@ -145,4 +94,7 @@ public class Domain {
 
     /** Name of the parent (super) domain. */
     private String superDomainName;
+
+    /** The abbreviation of the owning project. */
+    private String projectAbbreviation;
 }

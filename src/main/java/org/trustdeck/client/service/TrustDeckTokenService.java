@@ -21,6 +21,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.token.TokenManager;
 import org.trustdeck.client.config.TrustDeckClientConfig;
+import org.trustdeck.client.AccessTokenProvider;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author Armin Müller
  */
 @Slf4j
-public class TrustDeckTokenService {
+public class TrustDeckTokenService implements AccessTokenProvider {
 
 	/** Keycloak token manager object that allows multi-threaded access and refreshing of the token. */
     private volatile TokenManager trustDeckTokenManager;
@@ -65,9 +66,13 @@ public class TrustDeckTokenService {
         // Retrieve access token
         String accessToken = trustDeckTokenManager.getAccessTokenString();
         
-        log.trace("Retrieved token to authenticate against TrustDeck: [" + accessToken + "]");
-        return accessToken;
-    }
+		return accessToken;
+	}
+
+	@Override
+	public String getAccessToken() {
+		return authenticate();
+	}
 
     /**
      * This method ensures that there is a token manager object available (thread-safe).
@@ -114,4 +119,3 @@ public class TrustDeckTokenService {
         }
     }
 }
-

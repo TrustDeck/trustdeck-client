@@ -28,6 +28,20 @@ import lombok.Getter;
 @Builder
 @Getter
 public class TrustDeckClientConfig {
+	/** Creates empty configuration for builder-generated population. */
+	public TrustDeckClientConfig() { }
+	/** Creates configuration with all authentication and service values.
+	 * @param serviceUrl TrustDeck service URL
+	 * @param keycloakUrl Keycloak URL
+	 * @param realm Keycloak realm
+	 * @param clientId Keycloak client ID
+	 * @param clientSecret Keycloak client secret
+	 * @param userName user name
+	 * @param password password
+	 */
+	public TrustDeckClientConfig(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret, String userName, String password) {
+		this.serviceUrl = serviceUrl; this.keycloakUrl = keycloakUrl; this.realm = realm; this.clientId = clientId; this.clientSecret = clientSecret; this.userName = userName; this.password = password;
+	}
 	
 	/** The base URL of the TrustDeck instance to work with. */
     private String serviceUrl;

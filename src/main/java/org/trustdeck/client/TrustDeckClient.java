@@ -1,131 +1,86 @@
-/*
- * Trust Deck Client Library
- * Copyright 2025 TrustDeck Team
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.trustdeck.client;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.trustdeck.client.config.TrustDeckClientConfig;
-import org.trustdeck.client.exception.TrustDeckClientLibraryException;
-import org.trustdeck.client.exception.TrustDeckResponseException;
+import org.trustdeck.client.model.HealthStatus;
+import org.trustdeck.client.service.BaseEntityTypes;
 import org.trustdeck.client.service.Domains;
-import org.trustdeck.client.service.Persons;
+import org.trustdeck.client.service.Entities;
+import org.trustdeck.client.service.EntityTypes;
+import org.trustdeck.client.service.Permissions;
+import org.trustdeck.client.service.ProjectImages;
+import org.trustdeck.client.service.Projects;
 import org.trustdeck.client.service.Pseudonyms;
 import org.trustdeck.client.service.TrustDeckTokenService;
-import org.trustdeck.client.util.TrustDeckRequestUtil;
 
-import lombok.Getter;
-
-/**
- * This class encapsulates the connector subclasses.
- * 
- * @author Armin Müller
- */
+/** Main entry point for synchronous TrustDeck API operations. */
 public class TrustDeckClient {
-	
-	/** A service handling the authentication. */
-	@Getter
-	private TrustDeckTokenService tokenService;
-
-	/** Enables access to utility functions. */
-	@Getter
-	private TrustDeckRequestUtil util;
-	
-	/** Enables access to the config parameters. */
-	private TrustDeckClientConfig config;
-
-	/** Connector for the domain-scope. */
-	private Domains domains;
-
-	/** Connector for the person-scope. */
-	private Persons persons;
-
-	/**
-	 * Constructor initializing all needed sub-connectors.
-	 * 
-	 * @param config the configuration for this client instance
+	private final TrustDeckHttpClient http;
+	private final Domains domains;
+	private final Projects projects;
+	private final BaseEntityTypes baseEntityTypes;
+	private final Permissions permissions;
+	private final TrustDeckTokenService tokenService;
+	/** Creates a client that obtains tokens from the supplied Keycloak configuration.
+	 * @param config Keycloak and service configuration
 	 */
-	public TrustDeckClient(TrustDeckClientConfig config) {
-		this.config = config;
-		this.tokenService = new TrustDeckTokenService(config);
-		this.util = new TrustDeckRequestUtil(tokenService);
-		this.domains = new Domains(config, util);
-		this.persons = new Persons(config, util);
-	}
-
-	/**
-	 * Enables access to API methods for the domain-scope.
-	 * 
-	 * @return the domain connector
+	public TrustDeckClient(TrustDeckClientConfig config) { validate(config); tokenService = new TrustDeckTokenService(config); http = new TrustDeckHttpClient(config.getServiceUrl(), tokenService); domains = new Domains(http); projects = new Projects(http); baseEntityTypes = new BaseEntityTypes(http); permissions = new Permissions(http); }
+	/** Creates a client with caller-controlled access-token acquisition.
+	 * @param serviceUrl TrustDeck service base URL
+	 * @param tokenProvider bearer-token provider
 	 */
-	public Domains domains() {
-		return this.domains;
-	}
-
-	/**
-	 * Enables access to API methods for the pseudonym-scope.
-	 * 
-	 * @return the pseudonym connector
+	public TrustDeckClient(String serviceUrl, AccessTokenProvider tokenProvider) { tokenService = null; http = new TrustDeckHttpClient(serviceUrl, tokenProvider); domains = new Domains(http); projects = new Projects(http); baseEntityTypes = new BaseEntityTypes(http); permissions = new Permissions(http); }
+	/** Returns domain operations.
+	 * @return domain service
 	 */
-	public Pseudonyms pseudonyms(String domainName) {
-		return new Pseudonyms(config, util, domainName);
-	}
-
-	/**
-	 * Enables access to API methods for the person-scope.
-	 * 
-	 * @return the person connector
+	public Domains domains() { return domains; }
+	/** Returns pseudonym operations scoped to a domain.
+	 * @param domainName domain name
+	 * @return scoped pseudonym service
 	 */
-	public Persons persons() {
-		return this.persons;
-	}
-	
-	/**
-	 * Method to ping TrustDeck (e.g. to see if it's online/reachable).
-	 * 
-	 * @return {@code true} if the ping was successful, {@code false} otherwise
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
+	public Pseudonyms pseudonyms(String domainName) { return new Pseudonyms(http, domainName); }
+	/** Returns project operations.
+	 * @return project service
 	 */
-	public boolean ping() throws TrustDeckClientLibraryException, TrustDeckResponseException {
-    	// Build request URL
-    	String serviceUrl = config.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/ping")
-                .toUriString();
-        
-        // Build and send request
-    	ResponseEntity<Void> response = null;
-    	try {
-            response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Void.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Pinging TrustDeck failed: " + e.getMessage(), e);
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		return true;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+	public Projects projects() { return projects; }
+	/** Returns image operations scoped to a project.
+	 * @param project project abbreviation
+	 * @return scoped image service
+	 */
+	public ProjectImages projectImages(String project) { return new ProjectImages(http, project); }
+	/** Returns base entity-type operations.
+	 * @return base type service
+	 */
+	public BaseEntityTypes baseEntityTypes() { return baseEntityTypes; }
+	/** Returns entity-type operations scoped to a project.
+	 * @param project project abbreviation
+	 * @return scoped entity-type service
+	 */
+	public EntityTypes entityTypes(String project) { return new EntityTypes(http, project); }
+	/** Returns entity operations scoped to a project and type.
+	 * @param project project abbreviation
+	 * @param type entity type name
+	 * @return scoped entity service
+	 */
+	public Entities entities(String project, String type) { return new Entities(http, project, type); }
+	/** Returns permission operations.
+	 * @return permission service
+	 */
+	public Permissions permissions() { return permissions; }
+	/** Retrieves the unauthenticated service health status.
+	 * @return health status
+	 */
+	public HealthStatus health() { return http.exchange(HttpMethod.GET, http.uri(new String[] { "api", "health" }, Map.of()), null, HealthStatus.class, Set.of(200), false).getBody(); }
+	/** Returns whether the health endpoint responds successfully.
+	 * @return {@code true} when HTTP 200 is received
+	 */
+	public boolean ping() { health(); return true; }
+	/** Returns the Keycloak-backed token service, or {@code null} for token-provider clients.
+	 * @return token service or {@code null}
+	 */
+	public TrustDeckTokenService getTokenService() { return tokenService; }
+	private static void validate(TrustDeckClientConfig config) { if (config == null) throw new IllegalArgumentException("config must not be null."); TrustDeckHttpClient.require(config.getServiceUrl(), "serviceUrl"); TrustDeckHttpClient.require(config.getKeycloakUrl(), "keycloakUrl"); TrustDeckHttpClient.require(config.getRealm(), "realm"); TrustDeckHttpClient.require(config.getClientId(), "clientId"); TrustDeckHttpClient.require(config.getClientSecret(), "clientSecret"); TrustDeckHttpClient.require(config.getUserName(), "userName"); TrustDeckHttpClient.require(config.getPassword(), "password"); }
 }

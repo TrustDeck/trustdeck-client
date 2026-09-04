@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -33,10 +32,11 @@ import java.time.LocalDateTime;
  */
 @Builder
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Pseudonym {
+	/** Creates an empty pseudonym model for JSON binding. */
+	public Pseudonym() { }
 	
     /** IdentifierItem of the record. */
     private IdentifierItem identifierItem;

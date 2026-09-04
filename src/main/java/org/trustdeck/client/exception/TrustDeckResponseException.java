@@ -18,9 +18,7 @@
 package org.trustdeck.client.exception;
 
 import org.springframework.http.HttpStatusCode;
-
-import lombok.Getter;
-import lombok.Setter;
+import org.trustdeck.client.model.HttpStatusInfo;
 
 /**
  * Exception to encapsulate non-desired responses of the TrustDeck.
@@ -33,9 +31,17 @@ public class TrustDeckResponseException extends RuntimeException {
 	private static final long serialVersionUID = 890444675247657376L;
 	
 	/** The status code originally returned by the triggering request. */
-	@Getter
-	@Setter
-	private HttpStatusCode responseStatusCode;
+	private final HttpStatusCode responseStatusCode;
+	/** Numeric status code. */
+	private final int statusCode;
+	/** Parsed backend status information. */
+	private final HttpStatusInfo statusInfo;
+	/** Bounded raw response body. */
+	private final String rawBody;
+	/** Response content type. */
+	private final String contentType;
+	/** Response location. */
+	private final String location;
 	
 	/** 
 	 * Constructor that also defines the triggering status code and a message.
@@ -45,7 +51,49 @@ public class TrustDeckResponseException extends RuntimeException {
 	 * 
 	 */
 	public TrustDeckResponseException(String message, HttpStatusCode responseStatusCode) {
+		this(message, responseStatusCode, null, null, null, null);
+	}
+
+	/** Creates an exception with complete response diagnostics.
+	 * @param message failure message
+	 * @param responseStatusCode HTTP status
+	 * @param statusInfo parsed status information
+	 * @param rawBody bounded raw body
+	 * @param contentType response content type
+	 * @param location response location
+	 */
+	public TrustDeckResponseException(String message, HttpStatusCode responseStatusCode, HttpStatusInfo statusInfo, String rawBody, String contentType, String location) {
 		super(message);
 		this.responseStatusCode = responseStatusCode;
+		this.statusCode = responseStatusCode.value();
+		this.statusInfo = statusInfo;
+		this.rawBody = rawBody;
+		this.contentType = contentType;
+		this.location = location;
 	}
+
+	/** Returns the Spring status code.
+	 * @return response status
+	 */
+	public HttpStatusCode getResponseStatusCode() { return responseStatusCode; }
+	/** Returns the numeric status code.
+	 * @return status code
+	 */
+	public int getStatusCode() { return statusCode; }
+	/** Returns parsed backend status information.
+	 * @return status information
+	 */
+	public HttpStatusInfo getStatusInfo() { return statusInfo; }
+	/** Returns the bounded raw response body.
+	 * @return raw body
+	 */
+	public String getRawBody() { return rawBody; }
+	/** Returns the response content type.
+	 * @return content type
+	 */
+	public String getContentType() { return contentType; }
+	/** Returns the response location.
+	 * @return location
+	 */
+	public String getLocation() { return location; }
 }
