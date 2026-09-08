@@ -1,127 +1,121 @@
-# TrustDeck Client Library 
-A Client library that provides access to the APIs of the TrustDeck services.
+# TrustDeck Client Library
 
-## Overview
-
-The TrustDeck Client Library serves as a client-side interface to the TrustDeck APIs, providing endpoints for:
-
-- Domain management (create, read, update, delete, list all)
-- Pseudonym operations (creation, read, update, delete)
-- Person management (create, read, update, delete, search)
+Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
 
 ## Requirements
 
-- Java 21 or later
-- Maven 3.6+
-- Spring
-- Keycloak authentication server
-- TrustDeck service
+The library requires Java 21 or newer. Maven is used to build the project and to run the included example.
 
-## Getting Started
+## Configuration
 
-### Configuration
+Create a `TrustDeckClient` with password-grant settings, preferably loaded from environment variables or a secrets manager. Applications with another OAuth flow may provide an `AccessTokenProvider` instead.
 
-Create a new configuration object:
+`TrustDeckClientExample` reads the connection details from these environment variables:
+
+- `TRUSTDECK_SERVICE_URL`: URL of the TrustDeck backend
+- `TRUSTDECK_KEYCLOAK_URL`: base URL of the Keycloak server
+- `TRUSTDECK_REALM`: Keycloak realm
+- `TRUSTDECK_CLIENT_ID`: Keycloak client ID
+- `TRUSTDECK_CLIENT_SECRET`: Keycloak client secret
+- `TRUSTDECK_USERNAME`: Keycloak user name
+- `TRUSTDECK_PASSWORD`: Keycloak user password
+
+The example also accepts these values as Java system properties. System properties take precedence over environment variables when both are provided.
+
+The configured Keycloak client must allow Direct Access Grants and have a client secret. The configured user must have the TrustDeck permissions required by the operations being performed.
 
 ```java
 TrustDeckClientConfig config = TrustDeckClientConfig.builder()
-	.serviceUrl("https://trustdeck.server.com")
-	.keycloakUrl("https://keycloak.server.com")
-	.realm("production")
-	.clientId("trustdeck")
-	.clientSecret("clientSecret")
-	.userName("testuser")
-	.password("testuserpassword")
-	.build();    
+	.serviceUrl(System.getenv("TRUSTDECK_SERVICE_URL"))
+	.keycloakUrl(System.getenv("TRUSTDECK_KEYCLOAK_URL"))
+	.realm(System.getenv("TRUSTDECK_REALM"))
+	.clientId(System.getenv("TRUSTDECK_CLIENT_ID"))
+	.clientSecret(System.getenv("TRUSTDECK_CLIENT_SECRET"))
+	.userName(System.getenv("TRUSTDECK_USERNAME"))
+	.password(System.getenv("TRUSTDECK_PASSWORD"))
+	.build();
+TrustDeckClient trustdeck = new TrustDeckClient(config);
 ```
 
-### Concrete Usage Example
+## Running the Example
 
+After setting the connection variables, run the complete example with:
+
+```bash
+mvn clean compile exec:java
+```
+
+The example performs real requests against the configured backend. It creates uniquely named projects, images, base and project-scoped entity types, domains, entities, and pseudonyms, reads the created resources, validates the pseudonym, and deletes the resources that support deletion in reverse dependency order.
+
+Base entity types currently have no delete operation in the TrustDeck API. The generated base entity type therefore remains after the example finishes and must be removed through an administrative backend operation if necessary.
+
+## Concrete Usage Example
+
+The following example creates a project and domain, then demonstrates the available pseudonym creation styles. The same services can also be used to read, update, search, and delete these resources.
 
 ```java
-TrustDeckClientConfig config = TrustDeckClientConfig.builder()
-	.serviceUrl("https://trustdeck.server.com")
-	.keycloakUrl("https://keycloak.server.com")
-	.realm("production")
-	.clientId("trustdeck")
-	.clientSecret("clientSecret")
-	.userName("testuser")
-	.password("testuserpassword")
+String projectAbbreviation = "research";
+
+Project project = Project.builder()
+	.name("Research project")
+	.abbreviation(projectAbbreviation)
+	.storeEntities(true)
+	.storePseudonyms(true)
 	.build();
+Project createdProject = trustdeck.projects().create(project);
 
-// Create client instance
-TrustDeckClient trustDeck = new TrustDeckClient(config);
-    
-// Build a domain object
-Domain domain = Domain.builder().name("TestDomain").prefix("TD-").build();
+Domain domain = Domain.builder()
+	.name("research-domain")
+	.prefix("RD")
+	.projectAbbreviation(createdProject.getAbbreviation())
+	.build();
+Domain createdDomain = trustdeck.domains().create(domain);
 
-// Create new domain
-Domain createdDomain = trustDeck.domains().create(domain);
-     
-// There are three ways to create a new pseudonym object
-// 1. Only provide an identifier item and create pseudonym
-IdentifierItem identifierItem1 = IdentifierItem.builder().identifier("TestID1").idType("TestType").build();
-     
-// Create new pseudonym by only providing the identifier item
-Pseudonym createdPseudonym1 = trustDeck.pseudonyms(domain.getName()).create(identifierItem1, false);
-     
-// 2. Directly use the identifier and idType
-Pseudonym createdPseudonym2 = trustDeck.pseudonyms(domain.getName()).create("TestID2", "TestType", false)
-     
-// 3. Provide more information besides the identifier/idType alone
-IdentifierItem identifierItem2 = IdentifierItem.builder().identifier("TestID3").idType("TestType").build();
+// Create a pseudonym from an identifier item
+IdentifierItem identifierItem = IdentifierItem.builder()
+	.identifier("TestID1")
+	.idType("TestType")
+	.build();
+Pseudonym createdPseudonym1 = trustdeck.pseudonyms(createdDomain.getName())
+	.create(identifierItem, false);
 
-// Build a slightly more complex pseudonym object
+// Create a pseudonym directly from an identifier and identifier type
+Pseudonym createdPseudonym2 = trustdeck.pseudonyms(createdDomain.getName())
+	.create("TestID2", "TestType", false);
+
+// Create a pseudonym with additional validity information
 Pseudonym pseudonym = Pseudonym.builder()
-	.identifierItem(identifierItem2)
+	.identifierItem(IdentifierItem.builder()
+		.identifier("TestID3")
+		.idType("TestType")
+		.build())
 	.validFrom(LocalDateTime.now())
 	.validityTime("1 week")
 	.build();
-        
-// Create new pseudonym by providing the slightly more complex pseudonym object
-Pseudonym createdPseudonym2 = trustDeck.pseudonyms(domain.getName()).create(pseudonym, false);
+Pseudonym createdPseudonym3 = trustdeck.pseudonyms(createdDomain.getName())
+	.create(pseudonym, false);
+
+Pseudonym readPseudonym = trustdeck.pseudonyms(createdDomain.getName())
+	.get(createdPseudonym1.getPsn());
 ```
 
-More examples can be found in the [TrustDeckClientExample.java](src/main/java/org/trustdeck/client/TrustDeckClientExample.java) file.
-
-## To run the example usage files
-
-- Set up  the configuration in the TrustDeckClientExample.java file so it can connect to a running TrustDeck instance.
-- Run `clean compile exec:java` in the root directory of the repository
-- Note: by default the used Slf4j logger will use stderr to print all logging information. If you want to change that, add e.g. `-Dorg.slf4j.simpleLogger.logFile=System.out` to the command, which then looks like this: `clean compile exec:java -Dorg.slf4j.simpleLogger.logFile=System.out`
-
-### How to Use in Your Application
-
-1. Add the TrustDeck Client library as a dependency
-
-```xml
-<!-- TrustDeck Client Library -->
-<dependency>
-    <groupId>org.trustdeck</groupId>
-    <artifactId>client</artifactId>
-    <version><!-- current client library version --></version>
-</dependency>
-```
-
-2. Create a configuration object using your connection properties
+Entities are scoped by project abbreviation and entity type. Build JSON payload data with Jackson and use a project entity type when creating entities:
 
 ```java
-TrustDeckClientConfig config = TrustDeckClientConfig.builder()
-	.serviceUrl("https://trustdeck.server.com")
-	.keycloakUrl("https://keycloak.server.com")
-	.realm("production")
-	.clientId("trustdeck")
-	.clientSecret("clientSecret")
-	.userName("testuser")
-	.password("testuserpassword")
-	.build();
+ObjectMapper mapper = new ObjectMapper();
+Entity entity = new Entity();
+entity.setData(mapper.valueToTree(Map.of("givenName", "Ada", "familyName", "Lovelace")));
+
+Entity created = trustdeck.entities(projectAbbreviation, "patient").create(entity);
 ```
 
-3. Create a TrustDeck instance
+## Custom Access Tokens
+
+Applications that acquire tokens through another OAuth flow can provide an `AccessTokenProvider` instead of configuring Keycloak password-grant credentials:
 
 ```java
-TrustDeckClient trustDeck = new TrustDeckClient(config);
+AccessTokenProvider tokenProvider = () -> acquireTokenFromApplicationAuthentication();
+TrustDeckClient trustdeck = new TrustDeckClient("https://trustdeck.example.com", tokenProvider);
 ```
 
-4. Call the connector methods.
-
+The provider must return a current bearer token whenever `getAccessToken()` is called.

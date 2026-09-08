@@ -1,6 +1,6 @@
 /*
  * TrustDeck Client Library
- * Copyright 2025 Armin Müller
+ * Copyright 2026 Armin Müller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,20 @@
  * limitations under the License.
  */
 
-package org.trustdeck.client.model;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+package org.trustdeck.client;
 
 /**
- * IdentifierItem object for TrustDeck.
- * Encapsulates the actual identifier and its type.
+ * Supplies a bearer access token for authenticated requests.
  *
  * @author Armin Müller
  */
-@Builder
-@Data
-@AllArgsConstructor
-public class IdentifierItem {
-	
-	/** Creates an empty identifier model for JSON binding. */
-	public IdentifierItem() { }
+@FunctionalInterface
+public interface AccessTokenProvider {
 
-	/** The identifying string. */
-	private String identifier;
-
-	/** The type of the identifier (e.g. social security number, or statutory health insurance number, ...). */
-	private String idType;
+	/**
+	 * Returns the current bearer token without the {@code Bearer } prefix.
+	 *
+	 * @return current access token
+	 */
+	String getAccessToken();
 }

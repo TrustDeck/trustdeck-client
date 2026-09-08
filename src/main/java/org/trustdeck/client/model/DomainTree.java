@@ -1,6 +1,6 @@
 /*
  * TrustDeck Client Library
- * Copyright 2025 Armin Müller
+ * Copyright 2026 Armin Müller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,31 @@
 
 package org.trustdeck.client.model;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 /**
- * IdentifierItem object for TrustDeck.
- * Encapsulates the actual identifier and its type.
+ * A domain and its nested children.
  *
  * @author Armin Müller
  */
-@Builder
 @Data
+@Builder
 @AllArgsConstructor
-public class IdentifierItem {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class DomainTree {
 	
-	/** Creates an empty identifier model for JSON binding. */
-	public IdentifierItem() { }
+	/** Creates an empty tree model for JSON binding. */
+	public DomainTree() { }
 
-	/** The identifying string. */
-	private String identifier;
-
-	/** The type of the identifier (e.g. social security number, or statutory health insurance number, ...). */
-	private String idType;
+	/** Root domain represented by this tree node. */
+	private Domain domain;
+	
+	/** Child domain nodes. */
+	private List<DomainTree> children;
 }

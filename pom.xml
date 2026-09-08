@@ -11,7 +11,7 @@
 
 	<groupId>org.trustdeck</groupId>
 	<artifactId>client</artifactId>
-	<version>0.6.0-BETA</version>
+	<version>1.0.0</version>
 	<packaging>jar</packaging>
 	<name>TrustDeck Client Library</name>
 	<description>A client library for interacting with the TrustDeck services.</description>
@@ -57,8 +57,39 @@
 		<!-- JSON manipulation for model representation (License: Apache 2.0) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.19.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
 			<version>2.19.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.19.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>2.19.1</version>
+		</dependency>
+		
+		<!-- Testing (License: EPL 2.0; compatible with Apache 2.0) -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.11.4</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<!-- Testing (License: Apache 2.0) -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>6.2.19</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
@@ -99,6 +130,24 @@
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.3.1</version>
+				<executions><execution><id>attach-sources</id><goals><goal>jar-no-fork</goal></goals></execution></executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.12.0</version>
+				<configuration><failOnWarnings>true</failOnWarnings></configuration>
+				<executions><execution><id>attach-javadocs</id><goals><goal>jar</goal></goals></execution></executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.5.2</version>
 			</plugin>
 		</plugins>
 	</build>

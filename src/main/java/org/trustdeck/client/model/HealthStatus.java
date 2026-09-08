@@ -1,6 +1,6 @@
 /*
  * TrustDeck Client Library
- * Copyright 2025 Armin Müller
+ * Copyright 2026 Armin Müller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,34 @@
 
 package org.trustdeck.client.model;
 
+import java.time.OffsetDateTime;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 /**
- * IdentifierItem object for TrustDeck.
- * Encapsulates the actual identifier and its type.
+ * Health information reported by TrustDeck.
  *
  * @author Armin Müller
  */
-@Builder
 @Data
+@Builder
 @AllArgsConstructor
-public class IdentifierItem {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class HealthStatus {
 	
-	/** Creates an empty identifier model for JSON binding. */
-	public IdentifierItem() { }
+	/** Creates an empty health model for JSON binding. */
+	public HealthStatus() { }
 
-	/** The identifying string. */
-	private String identifier;
-
-	/** The type of the identifier (e.g. social security number, or statutory health insurance number, ...). */
-	private String idType;
+	/** Health state reported by the service. */
+	private String status;
+	
+	/** Service name reported by the backend. */
+	private String service;
+	
+	/** Time at which the health response was created. */
+	private OffsetDateTime timestamp;
 }

@@ -1,6 +1,6 @@
 /*
  * TrustDeck Client Library
- * Copyright 2025 Armin Müller
+ * Copyright 2026 Armin Müller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,20 @@
 
 package org.trustdeck.client.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import java.util.List;
 
 /**
- * IdentifierItem object for TrustDeck.
- * Encapsulates the actual identifier and its type.
- *
+ * A search result, including whether the backend truncated it.
+ * 
+ * @param <T> item type
+ * @param items returned items
+ * @param partial whether the result was truncated
  * @author Armin Müller
  */
-@Builder
-@Data
-@AllArgsConstructor
-public class IdentifierItem {
+public record SearchResult<T>(List<T> items, boolean partial) {
 	
-	/** Creates an empty identifier model for JSON binding. */
-	public IdentifierItem() { }
-
-	/** The identifying string. */
-	private String identifier;
-
-	/** The type of the identifier (e.g. social security number, or statutory health insurance number, ...). */
-	private String idType;
+	/** Copies the result list. */
+	public SearchResult {
+		items = List.copyOf(items);
+	}
 }

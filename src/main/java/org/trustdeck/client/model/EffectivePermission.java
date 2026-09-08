@@ -1,6 +1,6 @@
 /*
  * TrustDeck Client Library
- * Copyright 2025 Armin Müller
+ * Copyright 2026 Armin Müller
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,40 @@
 
 package org.trustdeck.client.model;
 
+import java.time.OffsetDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 /**
- * IdentifierItem object for TrustDeck.
- * Encapsulates the actual identifier and its type.
+ * An action effective for a resource.
  *
  * @author Armin Müller
  */
-@Builder
 @Data
+@Builder
 @AllArgsConstructor
-public class IdentifierItem {
+public class EffectivePermission {
 	
-	/** Creates an empty identifier model for JSON binding. */
-	public IdentifierItem() { }
+	/** Creates an empty permission model for JSON binding. */
+	public EffectivePermission() { }
 
-	/** The identifying string. */
-	private String identifier;
-
-	/** The type of the identifier (e.g. social security number, or statutory health insurance number, ...). */
-	private String idType;
+	/** Resource type. */
+	private String resourceType;
+	
+	/** Resource name. */
+	private String resourceName;
+	
+	/** Project abbreviation, when applicable. */
+	private String projectAbbreviation;
+	
+	/** Allowed action. */
+	private String action;
+	
+	/** Permission validity start. */
+	private OffsetDateTime validFrom;
+	
+	/** Permission validity end. */
+	private OffsetDateTime validTo;
 }

@@ -1,13 +1,13 @@
 /*
- * Trust Deck Client Library
- * Copyright 2025 TrustDeck Team
- * 
+ * TrustDeck Client Library
+ * Copyright 2026 Armin Müller
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,406 +17,251 @@
 
 package org.trustdeck.client.service;
 
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.trustdeck.client.config.TrustDeckClientConfig;
-import org.trustdeck.client.exception.TrustDeckClientLibraryException;
-import org.trustdeck.client.exception.TrustDeckResponseException;
+import org.trustdeck.client.TrustDeckHttpClient;
 import org.trustdeck.client.model.Domain;
-import org.trustdeck.client.util.TrustDeckRequestUtil;
+import org.trustdeck.client.model.DomainTree;
+import org.trustdeck.client.model.SearchResult;
 
 /**
- * A connector library for programmatic interaction with the domain management endpoints
- * of the ACE pseudonymization service in TrustDeck.
- * 
- * @author Chethan Nagaraj, Armin Müller
+ * Synchronous operations for TrustDeck domains.
+ *
+ * @author Armin Müller
  */
-@Slf4j
 public class Domains {
 
-	/** Enables access to the configuration variables. */
-	private TrustDeckClientConfig trustDeckClientConfig;
-	
-	/** Enables access to utility methods. */
-	private TrustDeckRequestUtil util;
+	/** Shared HTTP transport object. */
+	private final TrustDeckHttpClient http;
 
 	/**
-	 * Constructor for a connector handling domain-specific requests.
-	 * Initializes the config and the utility object.
+	 * Creates the domain service.
 	 * 
-	 * @param config the configuration for this TrustDeck connection
-	 * @param trustDeckRequestUtil the helper object handling authentication and some request building tasks 
+	 * @param http shared HTTP transport
 	 */
-	public Domains(TrustDeckClientConfig config, TrustDeckRequestUtil trustDeckRequestUtil) {
-		this.trustDeckClientConfig = config;
-		this.util = trustDeckRequestUtil;
+	public Domains(TrustDeckHttpClient http) {
+		this.http = http;
+	}
+
+	/**
+	 * Creates a domain; accepts HTTP 200 or 201.
+	 * 
+	 * @param domain the domain definition
+	 * @return created domain
+	 */
+	public Domain create(Domain domain) {
+		return request(HttpMethod.POST, new String[] {"api", "domains"}, Map.of(), domain, Set.of(200, 201));
 	}
 	
-    /**
-     * Gets a list of all domains.
-     *
-     * @return a list of domain objects
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public List<Domain> getAll() throws TrustDeckClientLibraryException, TrustDeckResponseException {
-        // Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/pseudonymization/experimental/domains/hierarchy")
-                .toUriString();
-        
-        // Build and send request
-    	ResponseEntity<Domain[]> response = null;
-    	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Domain[].class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Retrieving all domains failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		return Arrays.asList(response.getBody());
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+	/**
+	 * Creates a complete domain definition; accepts HTTP 200 or 201.
+	 * 
+	 * @param domain the domain definition
+	 * @return created domain
+	 */
+	public Domain createComplete(Domain domain) {
+		return request(HttpMethod.POST, new String[] {"api", "domains", "complete"}, Map.of(), domain, Set.of(200, 201));
+	}
 
-    /**
-     * Gets a domain by name.
-     *
-     * @param domainName the name of the domain
-     * @return the requested domain
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public Domain get(String domainName) throws TrustDeckClientLibraryException, TrustDeckResponseException {
-        // Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/pseudonymization/domain")
-                .queryParam("name", domainName)
-                .toUriString();
-    	
-        // Build and send request
-    	ResponseEntity<Domain> response = null;
-    	try {
-            response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), Domain.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Retrieving domain failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		throw new TrustDeckResponseException("The domain \"" + domainName + "\" was not found.", response.getStatusCode());
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+	/**
+	 * Deletes a domain and optionally its children.
+	 * 
+	 * @param domainName the domain name
+	 * @param recursive recursive deletion flag
+	 * @return {@code true} after HTTP 204
+	 */
+	public boolean delete(String domainName, Boolean recursive) {
+		http.empty(HttpMethod.DELETE,
+				http.uri(new String[] {"api", "domains"}, Map.of("name", required(domainName), "recursive", recursive)),
+				null, Set.of(204), true);
 
-    /**
-     * Gets a specific attribute of a domain.
-     *
-     * @param domainName the name of the domain
-     * @param attributeName the name of the attribute to retrieve
-     * @return the requested attribute as a String or {@code null} when unsuccessful
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public String getAttribute(String domainName, String attributeName) throws TrustDeckClientLibraryException, TrustDeckResponseException {
-        // Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .pathSegment("api", "pseudonymization", "domains", domainName, attributeName)
-                .toUriString();
-    	
-        // Build and send request
-        ResponseEntity<String> response = null;
-    	try {
-            response = new RestTemplate().exchange(url, HttpMethod.GET, util.createRequestEntity(), String.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Retrieving domain attribute failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		throw new TrustDeckResponseException("The domain \"" + domainName + "\" was not found.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.FORBIDDEN) {
-    		log.debug("Insufficient rights to read attribute\"" + attributeName + "\" from domain \"" + domainName + "\".");
-    		return null;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+		return true;
+	}
 
-    /**
-     * Creates a new domain with a reduced set of attributes.
-     *
-     * @param domain the domain to create
-     * @return the created domain when the creation was successful, {@code null} otherwise
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public Domain create(Domain domain) throws TrustDeckClientLibraryException, TrustDeckResponseException {
-        // Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/pseudonymization/domain")
-                .toUriString();
-    	
-        // Build and send request
-        ResponseEntity<Domain> response = null;
-    	try {
-        	response = new RestTemplate()
-        			.exchange(url, 
-        			HttpMethod.POST, 
-        			util.createRequestEntity(domain), 
-        			Domain.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Creating domain failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		log.debug("The domain that was to be inserted was already in the database.");
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.CREATED) {
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		throw new TrustDeckResponseException("The parent domain \"" + domain.getSuperDomainName() + "\" was not found.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.NOT_ACCEPTABLE) {
-    		throw new TrustDeckResponseException("The domain name is violating the URI-validity: \"" + domain.getName() + "\".", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
-    		log.debug("Creating the domain failed.");
-    		return null;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+	/**
+	 * Gets one domain attribute.
+	 * 
+	 * @param domainName domain name
+	 * @param attributeName attribute name
+	 * @return attribute value
+	 */
+	public String getAttribute(String domainName, String attributeName) {
+		return request(HttpMethod.GET, new String[] {"api", "domains", required(domainName), required(attributeName)}, 
+				Map.of(), null, String.class, Set.of(200));
+	}
 
-    /**
-     * Creates a new domain with all attributes.
-     *
-     * @param domain the domain to create
-     * @return the created domain when the creation was successful, {@code null} otherwise
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public Domain createComplete(Domain domain) throws TrustDeckClientLibraryException, TrustDeckResponseException {
-    	// Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/pseudonymization/domain/complete")
-                .toUriString();
-        
-        // Build and send request
-        ResponseEntity<Domain> response = null;
-    	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.POST, util.createRequestEntity(domain), Domain.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Creating domain failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		log.debug("The domain that was to be inserted was already in the database.");
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.CREATED) {
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		throw new TrustDeckResponseException("The parent domain \"" + domain.getSuperDomainName() + "\" was not found.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.NOT_ACCEPTABLE) {
-    		throw new TrustDeckResponseException("The domain name is violating the URI-validity: \"" + domain.getName() + "\".", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
-    		log.debug("Creating the domain failed.");
-    		return null;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+	/**
+	 * Gets a domain.
+	 * 
+	 * @param domainName the domain name
+	 * @return domain
+	 */
+	public Domain get(String domainName) {
+		return request(HttpMethod.GET, new String[] {"api", "domains", required(domainName)}, Map.of(), null, Set.of(200));
+	}
 
-    /**
-     * Updates an existing domain with a reduced set of attributes.
-     *
-     * @param domainName the name of the domain to update
-     * @param domain the updated domain data
-     * @return the updated domain when the update was successful, {@code null} otherwise
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public Domain update(String domainName, Domain domain) throws TrustDeckClientLibraryException, TrustDeckResponseException {
-    	// Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/pseudonymization/domain")
-                .queryParam("name", domainName)
-                .toUriString();
-        
-        // Build and send request
-        ResponseEntity<Domain> response = null;
-    	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(domain), Domain.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Updating domain failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		throw new TrustDeckResponseException("The domain that is to be updated (" + domainName + ") was not found.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
-    		log.debug("Updating the domain failed.");
-    		return null;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+	/**
+	 * Gets the backend's nested subtree without flattening it.
+	 * 
+	 * @param domainName root domain name
+	 * @return domain tree
+	 */
+	public DomainTree getSubtree(String domainName) {
+		return request(HttpMethod.GET, new String[] {"api", "domains", required(domainName), "subtree"}, Map.of(), null,
+				DomainTree.class, Set.of(200));
+	}
 
-    /**
-     * Updates an existing domain with all attributes.
-     *
-     * @param domainName the name of the domain to update
-     * @param domain the updated domain data
-     * @param recursive whether to apply changes recursively to sub-domains
-     * @return the updated domain when the update was successful, {@code null} otherwise
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public Domain updateComplete(String domainName, Domain domain, boolean recursive) throws TrustDeckClientLibraryException, TrustDeckResponseException {
-        // Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/pseudonymization/domain/complete")
-                .queryParam("name", domainName)
-                .queryParam("recursive", recursive)
-                .toUriString();
-        
-        // Build and send request
-        ResponseEntity<Domain> response = null;
-    	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(domain), Domain.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Updating domain failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-    		throw new TrustDeckResponseException("The provided salt value was invalid.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		throw new TrustDeckResponseException("The domain that is to be updated (" + domainName + ") was not found.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.NOT_ACCEPTABLE) {
-    		throw new TrustDeckResponseException("The new domain name is violating the URI-validity: \"" + domainName + "\".", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
-    		log.debug("Creating the domain failed.");
-    		return null;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+	/**
+	 * Gets all domain trees.
+	 * 
+	 * @return hierarchy trees
+	 */
+	public List<DomainTree> getHierarchy() {
+		return list(HttpMethod.GET, new String[] {"api", "domains", "hierarchy"}, Map.of(), null, Set.of(200));
+	}
 
-    /**
-     * Deletes a domain.
-     *
-     * @param domainName the name of the domain to delete
-     * @param recursive whether to delete sub-domains recursively
-     * @return {@code true} when the deletion was successful, {@code false} otherwise
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public boolean delete(String domainName, boolean recursive) throws TrustDeckClientLibraryException, TrustDeckResponseException {
-        // Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-                .path("api/pseudonymization/domain")
-                .queryParam("name", domainName)
-                .queryParam("recursive", recursive)
-                .toUriString();
-        
-        // Build and send request
-        ResponseEntity<Void> response = null;
-    	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.DELETE, util.createRequestEntity(), Void.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Deleting domain failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.NO_CONTENT) {
-    		return true;
-    	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		throw new TrustDeckResponseException("The domain that is to be deleted (" + domainName + ") was not found.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
-    		log.debug("Deleting the domain failed.");
-    		return false;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+	/**
+	 * Flattens the server's explicit subtree representation.
+	 * 
+	 * @param domainName root domain name
+	 * @return depth-first domain list
+	 */
+	public List<Domain> flattenSubtree(String domainName) {
+		List<Domain> result = new ArrayList<>();
+		flatten(getSubtree(domainName), result);
 
-    /**
-     * Updates the salt value of a domain.
-     *
-     * @param domainName the name of the domain where the salt value should be updated
-     * @param newSalt the new salt value
-     * @param allowEmpty whether to allow an empty salt value
-     * @return the updated domain when the update was successful, {@code null} otherwise
-     * @throws TrustDeckClientLibraryException when sending the request to TrustDeck failed
-     * @throws TrustDeckResponseException when the response from TrustDeck is not as expected
-     */
-    public Domain updateSalt(String domainName, String newSalt, boolean allowEmpty) throws TrustDeckClientLibraryException, TrustDeckResponseException {
-    	// Build request URL
-    	String serviceUrl = trustDeckClientConfig.getServiceUrl();
-        String url = UriComponentsBuilder.fromUriString(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/")
-        		.pathSegment("api", "pseudonymization", "domains", domainName, "salt")
-                .queryParam("salt", newSalt)
-                .queryParam("allowEmpty", allowEmpty)
-                .toUriString();
-        
-        // Build and send request
-        ResponseEntity<Domain> response = null;
-    	try {
-    		response = new RestTemplate().exchange(url, HttpMethod.PUT, util.createRequestEntity(), Domain.class);
-        } catch (RestClientException e) {
-            // Wrap the exception and re-throw
-            throw new TrustDeckClientLibraryException("Updating salt failed: " + e.getMessage());
-        }
-    	
-    	// Check response
-    	if (response.getStatusCode() == HttpStatus.OK) {
-    		return response.getBody();
-    	} else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-    		throw new TrustDeckResponseException("The provided salt value was invalid.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-    		throw new TrustDeckResponseException("The domain for which the updated salt-value was given (" + domainName + "), couldn't be found.", response.getStatusCode());
-    	} else if (response.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
-    		log.debug("Updating the salt failed.");
-    		return null;
-    	} else {
-    		throw new TrustDeckResponseException("Unexpected status code in response.", response.getStatusCode());
-    	}
-    }
+		return result;
+	}
+
+	/**
+	 * Flattens one tree depth-first into the supplied result list.
+	 * 
+	 * @param tree tree to flatten
+	 * @param result destination list
+	 */
+	private void flatten(DomainTree tree, List<Domain> result) {
+		if (tree == null) {
+			return;
+		}
+
+		if (tree.getDomain() != null) {
+			result.add(tree.getDomain());
+		}
+
+		if (tree.getChildren() != null) {
+			tree.getChildren().forEach(child -> flatten(child, result));
+		}
+	}
+
+	/**
+	 * Updates a domain and its children.
+	 * 
+	 * @param domainName domain name
+	 * @param updatedDomain new definition
+	 * @param recursive whether children are updated
+	 * @return updated domain
+	 */
+	public Domain updateComplete(String domainName, Domain updatedDomain, boolean recursive) {
+		return request(HttpMethod.PUT, new String[] {"api", "domains", "complete"},
+				Map.of("name", required(domainName), "recursive", recursive), updatedDomain, Set.of(200));
+	}
+
+	/**
+	 * Updates a domain.
+	 * 
+	 * @param domainName domain name
+	 * @param updatedDomain new definition
+	 * @return updated domain
+	 */
+	public Domain update(String domainName, Domain updatedDomain) {
+		return request(HttpMethod.PUT, new String[] {"api", "domains"}, Map.of("name", required(domainName)), updatedDomain, Set.of(200));
+	}
+
+	/**
+	 * Replaces a domain salt.
+	 * 
+	 * @param domainName domain name
+	 * @param salt salt value; null is sent as an empty value
+	 * @param allowEmpty whether empty salts are accepted
+	 * @return updated domain
+	 */
+	public Domain updateSalt(String domainName, String salt, boolean allowEmpty) {
+		return request(HttpMethod.PUT, new String[] {"api", "domains", required(domainName), "salt"},
+				Map.of("salt", salt == null ? "" : salt, "allowEmpty", allowEmpty), null, Set.of(200));
+	}
+
+	/**
+	 * Searches domains; HTTP 206 is exposed as a partial result.
+	 * 
+	 * @param query search query
+	 * @return search result
+	 */
+	public SearchResult<Domain> search(String query) {
+		var response = http.exchange(HttpMethod.GET,
+				http.uri(new String[] {"api", "domains"}, Map.of("query", required(query))), 
+				null, new ParameterizedTypeReference<List<Domain>>() {}, Set.of(200, 206), true);
+
+		return new SearchResult<>(response.getBody(), response.getStatus() == 206);
+	}
+
+	/**
+	 * Executes an authenticated request and deserializes its response body as a domain.
+	 *
+	 * @param method the HTTP method to use
+	 * @param path the individual URI path segments
+	 * @param query the query parameters to include
+	 * @param body the request body, or {@code null} when no body is required
+	 * @param statuses the expected HTTP status codes
+	 * @return the domain returned by TrustDeck, or {@code null} when the response has no body
+	 */
+	private Domain request(HttpMethod method, String[] path, Map<String, ?> query, Object body, Set<Integer> statuses) {
+		return request(method, path, query, body, Domain.class, statuses);
+	}
+
+	/**
+	 * Executes an authenticated request and deserializes its response body as the requested type.
+	 *
+	 * @param <T> the expected response body type
+	 * @param method the HTTP method to use
+	 * @param path the individual URI path segments
+	 * @param query the query parameters to include
+	 * @param body the request body, or {@code null} when no body is required
+	 * @param type the class representing the expected response body type
+	 * @param statuses the expected HTTP status codes
+	 * @return the deserialized response body, or {@code null} when the response has no body
+	 */
+	private <T> T request(HttpMethod method, String[] path, Map<String, ?> query, Object body, Class<T> type, Set<Integer> statuses) {
+		return http.exchange(method, http.uri(path, query), body, type, statuses, true).getBody();
+	}
+
+	/**
+	 * Executes an authenticated request and deserializes its response body as a list of domain trees.
+	 *
+	 * @param method the HTTP method to use
+	 * @param path the individual URI path segments
+	 * @param query the query parameters to include
+	 * @param body the request body, or {@code null} when no body is required
+	 * @param statuses the expected HTTP status codes
+	 * @return the domain trees returned by TrustDeck, or {@code null} when the response has no body
+	 */
+	private List<DomainTree> list(HttpMethod method, String[] path, Map<String, ?> query, Object body, Set<Integer> statuses) {
+		return http.exchange(method, http.uri(path, query), body, 
+				new ParameterizedTypeReference<List<DomainTree>>() {}, statuses, true).getBody();
+	}
+
+	/**
+	 * Validates that a required domain-related value is neither {@code null} nor blank.
+	 *
+	 * @param value the value to validate
+	 * @return the validated value
+	 * @throws IllegalArgumentException when the value is {@code null} or blank
+	 */
+	private static String required(String value) {
+		return TrustDeckHttpClient.require(value, "value");
+	}
 }
