@@ -65,7 +65,7 @@ public class Entities {
 	}
 
 	/**
-	 * Creates an entity without a record-linkage resolution.
+	 * Creates an entity without a record-linkage resolution strategy.
 	 * 
 	 * @param entity entity payload
 	 * @return created entity

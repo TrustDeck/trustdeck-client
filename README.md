@@ -34,7 +34,7 @@ TrustDeckClientConfig config = TrustDeckClientConfig.builder()
 	.userName(System.getenv("TRUSTDECK_USERNAME"))
 	.password(System.getenv("TRUSTDECK_PASSWORD"))
 	.build();
-TrustDeckClient client = new TrustDeckClient(config);
+TrustDeckClient trustdeck = new TrustDeckClient(config);
 ```
 
 ## Running the Example
@@ -49,26 +49,65 @@ The example performs real requests against the configured backend. It creates un
 
 Base entity types currently have no delete operation in the TrustDeck API. The generated base entity type therefore remains after the example finishes and must be removed through an administrative backend operation if necessary.
 
-## Entities
+## Concrete Usage Example
 
-Entities are scoped by project abbreviation and entity type. Build JSON payload data with Jackson.
+The following example creates a project and domain, then demonstrates the available pseudonym creation styles. The same services can also be used to read, update, search, and delete these resources.
+
+```java
+String projectAbbreviation = "research";
+
+Project project = Project.builder()
+	.name("Research project")
+	.abbreviation(projectAbbreviation)
+	.storeEntities(true)
+	.storePseudonyms(true)
+	.build();
+Project createdProject = trustdeck.projects().create(project);
+
+Domain domain = Domain.builder()
+	.name("research-domain")
+	.prefix("RD")
+	.projectAbbreviation(createdProject.getAbbreviation())
+	.build();
+Domain createdDomain = trustdeck.domains().create(domain);
+
+// Create a pseudonym from an identifier item
+IdentifierItem identifierItem = IdentifierItem.builder()
+	.identifier("TestID1")
+	.idType("TestType")
+	.build();
+Pseudonym createdPseudonym1 = trustdeck.pseudonyms(createdDomain.getName())
+	.create(identifierItem, false);
+
+// Create a pseudonym directly from an identifier and identifier type
+Pseudonym createdPseudonym2 = trustdeck.pseudonyms(createdDomain.getName())
+	.create("TestID2", "TestType", false);
+
+// Create a pseudonym with additional validity information
+Pseudonym pseudonym = Pseudonym.builder()
+	.identifierItem(IdentifierItem.builder()
+		.identifier("TestID3")
+		.idType("TestType")
+		.build())
+	.validFrom(LocalDateTime.now())
+	.validityTime("1 week")
+	.build();
+Pseudonym createdPseudonym3 = trustdeck.pseudonyms(createdDomain.getName())
+	.create(pseudonym, false);
+
+Pseudonym readPseudonym = trustdeck.pseudonyms(createdDomain.getName())
+	.get(createdPseudonym1.getPsn());
+```
+
+Entities are scoped by project abbreviation and entity type. Build JSON payload data with Jackson and use a project entity type when creating entities:
 
 ```java
 ObjectMapper mapper = new ObjectMapper();
 Entity entity = new Entity();
 entity.setData(mapper.valueToTree(Map.of("givenName", "Ada", "familyName", "Lovelace")));
 
-Entity created = client.entities("research", "patient")
-	.create(entity, RecordLinkageResolutionStrategy.CREATE_ORIGINAL);
+Entity created = trustdeck.entities(projectAbbreviation, "patient").create(entity);
 ```
-
-The record-linkage strategy is imported from the nested model enum:
-
-```java
-import org.trustdeck.client.model.RecordLinkageCandidate.RecordLinkageResolutionStrategy;
-```
-
-Use `client.domains()`, `client.pseudonyms(domainName)`, `client.projects()`, `client.projectImages(project)`, `client.baseEntityTypes()`, `client.entityTypes(project)`, and `client.permissions()` for their corresponding resources. `client.health()` performs unauthenticated health lookup; `ping()` delegates to it.
 
 ## Custom Access Tokens
 
@@ -76,8 +115,7 @@ Applications that acquire tokens through another OAuth flow can provide an `Acce
 
 ```java
 AccessTokenProvider tokenProvider = () -> acquireTokenFromApplicationAuthentication();
-TrustDeckClient client = new TrustDeckClient("https://trustdeck.example.com", tokenProvider);
+TrustDeckClient trustdeck = new TrustDeckClient("https://trustdeck.example.com", tokenProvider);
 ```
 
 The provider must return a current bearer token whenever `getAccessToken()` is called.
-
