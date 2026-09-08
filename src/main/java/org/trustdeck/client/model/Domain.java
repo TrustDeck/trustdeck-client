@@ -1,13 +1,13 @@
 /*
- * Trust Deck Client Library
- * Copyright 2025 TrustDeck Team
- * 
+ * TrustDeck Client Library
+ * Copyright 2025 Armin Müller
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,17 +27,18 @@ import java.time.LocalDateTime;
 
 /**
  * Data Transfer Object (DTO) for domains in TrustDeck.
- * 
- * @author Chethan Nagaraj, Armin Müller
+ *
+ * @author Armin Müller, Chethan Nagaraj
  */
 @Builder
 @Data
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Domain {
+	
 	/** Creates an empty domain model for JSON binding. */
 	public Domain() { }
-	
+
     /** Unique identifier of the domain. */
     private Integer id;
 
@@ -56,11 +57,11 @@ public class Domain {
     /** End of domain validity period. */
     private LocalDateTime validTo;
 
-    /** Validity period as a string (e.g., "1d"). */
-    private String validityTime;
-
     /** Whether validTo is inherited from parent domain. */
     private Boolean validToInherited;
+
+    /** Validity period as a string (e.g., "1d"). */
+    private String validityTime;
 
     /** Enforce start date validity for pseudonyms. */
     private Boolean enforceStartDateValidity;

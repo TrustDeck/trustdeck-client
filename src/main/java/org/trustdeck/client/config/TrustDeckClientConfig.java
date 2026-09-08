@@ -1,13 +1,13 @@
 /*
- * Trust Deck Client Library
- * Copyright 2025 TrustDeck Team
- * 
+ * TrustDeck Client Library
+ * Copyright 2025 Armin Müller
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,15 +22,23 @@ import lombok.Getter;
 
 /**
  * Configuration builder class as an alternative way to configure the client.
- * 
+ *
  * @author Armin Müller
  */
 @Builder
 @Getter
 public class TrustDeckClientConfig {
-	/** Creates empty configuration for builder-generated population. */
-	public TrustDeckClientConfig() { }
-	/** Creates configuration with all authentication and service values.
+
+	/**
+	 * Creates empty configuration for builder-generated population.
+	 */
+	public TrustDeckClientConfig() {
+		// Nothing to do
+	}
+
+	/**
+	 * Creates configuration with all authentication and service values.
+	 *
 	 * @param serviceUrl TrustDeck service URL
 	 * @param keycloakUrl Keycloak URL
 	 * @param realm Keycloak realm
@@ -39,28 +47,35 @@ public class TrustDeckClientConfig {
 	 * @param userName user name
 	 * @param password password
 	 */
-	public TrustDeckClientConfig(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret, String userName, String password) {
-		this.serviceUrl = serviceUrl; this.keycloakUrl = keycloakUrl; this.realm = realm; this.clientId = clientId; this.clientSecret = clientSecret; this.userName = userName; this.password = password;
+	public TrustDeckClientConfig(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret,
+			String userName, String password) {
+		this.serviceUrl = serviceUrl;
+		this.keycloakUrl = keycloakUrl;
+		this.realm = realm;
+		this.clientId = clientId;
+		this.clientSecret = clientSecret;
+		this.userName = userName;
+		this.password = password;
 	}
-	
+
 	/** The base URL of the TrustDeck instance to work with. */
-    private String serviceUrl;
+	private String serviceUrl;
 
 	/** The URL of the Keycloak authentication server for this TrustDeck instance. */
-    private String keycloakUrl;
+	private String keycloakUrl;
 
 	/** The name of the Keycloak realm. */
-    private String realm;
+	private String realm;
 
 	/** The client ID for authenticating against Keycloak. */
-    private String clientId;
+	private String clientId;
 
 	/** The client secret for authenticating against Keycloak. */
-    private String clientSecret;
+	private String clientSecret;
 
 	/** The user name for authenticating against Keycloak. */
-    private String userName;
+	private String userName;
 
 	/** The user's password for authenticating against Keycloak. */
-    private String password;
+	private String password;
 }

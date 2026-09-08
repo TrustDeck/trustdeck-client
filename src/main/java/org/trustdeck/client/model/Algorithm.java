@@ -1,13 +1,13 @@
 /*
- * Trust Deck Client Library
- * Copyright 2025 TrustDeck Team
- * 
+ * TrustDeck Client Library
+ * Copyright 2025-2026 Armin Müller
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,14 +25,15 @@ import lombok.Data;
 
 /**
  * Data Transfer Object (DTO) for algorithms in TrustDeck.
- * 
- * @author Chethan Nagaraj, Armin Müller
+ *
+ * @author Armin Müller, Chethan Nagaraj
  */
 @Builder
 @Data
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Algorithm {
+	
 	/** Creates an empty algorithm model for JSON binding. */
 	public Algorithm() { }
 
@@ -48,7 +49,7 @@ public class Algorithm {
 	/** If it's a randomness-based algorithm: how many pseudonyms/identifiers should the algorithm be able to create? */
     private Long randomAlgorithmDesiredSize;
 
-	/** If it's a randomness-based algorithm: which which probability should the creation of a pseudonym/identifier be successful? */
+	/** If it's a randomness-based algorithm: which probability should creation of a pseudonym/identifier be successful? */
     private Double randomAlgorithmDesiredSuccessProbability;
 
 	/** If a counter-based approach is used: the value of the counter. */
