@@ -5,13 +5,16 @@
 
 	<properties>
 		<java.version>21</java.version>
+		<jackson.core.version>2.21.4</jackson.core.version>
+		<jackson.annotations.version>2.21</jackson.annotations.version>
+		<jackson.databind.version>2.21.5</jackson.databind.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 
 	<groupId>org.trustdeck</groupId>
 	<artifactId>client</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<packaging>jar</packaging>
 	<name>TrustDeck Client Library</name>
 	<description>A client library for interacting with the TrustDeck services.</description>
@@ -58,22 +61,22 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.21.4</version>
+			<version>${jackson.core.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.19.1</version>
+			<version>${jackson.annotations.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.21.5</version>
+			<version>${jackson.databind.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.19.1</version>
+			<version>${jackson.databind.version}</version>
 		</dependency>
 		
 		<!-- Testing (License: EPL 2.0; compatible with Apache 2.0) -->
