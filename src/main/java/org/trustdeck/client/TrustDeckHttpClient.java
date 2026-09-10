@@ -19,6 +19,7 @@ package org.trustdeck.client;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClient.RequestBodySpec;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -48,6 +50,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public final class TrustDeckHttpClient {
+
+	/** Default connection-establishment timeout. */
+	public static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(5);
+
+	/** Default response-read timeout. */
+	public static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(30);
 
 	/** Maximum number of error-body characters retained in exceptions. */
 	private static final int MAX_ERROR_BODY_LENGTH = 16_384;
@@ -72,11 +80,34 @@ public final class TrustDeckHttpClient {
 	 * @throws TrustDeckClientLibraryException if the URL is invalid
 	 */
 	public TrustDeckHttpClient(String serviceUrl, AccessTokenProvider tokenProvider) {
+		this(serviceUrl, tokenProvider, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT);
+	}
+
+	/**
+	 * Creates a transport with explicit finite HTTP timeouts.
+	 *
+	 * @param serviceUrl TrustDeck service base URL
+	 * @param tokenProvider provider for authenticated requests
+	 * @param connectTimeout maximum time to establish a connection
+	 * @param readTimeout maximum time between response bytes
+	 * @throws TrustDeckClientLibraryException if the URL or timeout values are invalid
+	 */
+	public TrustDeckHttpClient(String serviceUrl, AccessTokenProvider tokenProvider,
+			Duration connectTimeout, Duration readTimeout) {
 		try {
 			baseUri = UriComponentsBuilder.fromUriString(require(serviceUrl, "serviceUrl")).build().toUri();
+			if (connectTimeout == null || connectTimeout.isZero() || connectTimeout.isNegative()
+					|| readTimeout == null || readTimeout.isZero() || readTimeout.isNegative()) {
+				throw new IllegalArgumentException("HTTP timeouts must be positive.");
+			}
 
-			// Remove trailing slashes before creating the client from the given URI
-			restClient = RestClient.builder().baseUrl(baseUri.toString().replaceAll("/$", "")).build();
+			// SimpleClientHttpRequestFactory applies connect and socket read limits to RestClient.
+			SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+			requestFactory.setConnectTimeout(connectTimeout);
+			requestFactory.setReadTimeout(readTimeout);
+			// Remove trailing slashes before creating the client from the given URI.
+			restClient = RestClient.builder().baseUrl(baseUri.toString().replaceAll("/$", ""))
+					.requestFactory(requestFactory).build();
 			mapper = new ObjectMapper().registerModule(new JavaTimeModule())
 					.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 			this.tokenProvider = tokenProvider;

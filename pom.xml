@@ -14,7 +14,7 @@
 
 	<groupId>org.trustdeck</groupId>
 	<artifactId>client</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>TrustDeck Client Library</name>
 	<description>A client library for interacting with the TrustDeck services.</description>

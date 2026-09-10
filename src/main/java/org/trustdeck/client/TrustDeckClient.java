@@ -19,6 +19,7 @@ package org.trustdeck.client;
 
 import java.util.Map;
 import java.util.Set;
+import java.time.Duration;
 
 import org.springframework.http.HttpMethod;
 import org.trustdeck.client.config.TrustDeckClientConfig;
@@ -67,7 +68,8 @@ public class TrustDeckClient {
 		validate(config);
 
 		tokenService = new TrustDeckTokenService(config);
-		http = new TrustDeckHttpClient(config.getServiceUrl(), tokenService);
+		http = new TrustDeckHttpClient(config.getServiceUrl(), tokenService,
+				config.getConnectTimeout(), config.getReadTimeout());
 		domains = new Domains(http);
 		projects = new Projects(http);
 		baseEntityTypes = new BaseEntityTypes(http);
@@ -81,8 +83,22 @@ public class TrustDeckClient {
 	 * @param tokenProvider bearer-token provider
 	 */
 	public TrustDeckClient(String serviceUrl, AccessTokenProvider tokenProvider) {
+		this(serviceUrl, tokenProvider, TrustDeckHttpClient.DEFAULT_CONNECT_TIMEOUT,
+				TrustDeckHttpClient.DEFAULT_READ_TIMEOUT);
+	}
+
+	/**
+	 * Creates a client with caller-controlled token acquisition and HTTP timeouts.
+	 *
+	 * @param serviceUrl the TrustDeck service's base URL
+	 * @param tokenProvider bearer-token provider
+	 * @param connectTimeout maximum time to establish a connection
+	 * @param readTimeout maximum time between response bytes
+	 */
+	public TrustDeckClient(String serviceUrl, AccessTokenProvider tokenProvider,
+			Duration connectTimeout, Duration readTimeout) {
 		tokenService = null;
-		http = new TrustDeckHttpClient(serviceUrl, tokenProvider);
+		http = new TrustDeckHttpClient(serviceUrl, tokenProvider, connectTimeout, readTimeout);
 		domains = new Domains(http);
 		projects = new Projects(http);
 		baseEntityTypes = new BaseEntityTypes(http);
