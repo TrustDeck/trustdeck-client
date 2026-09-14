@@ -256,6 +256,7 @@ public final class TrustDeckHttpClient {
 				HttpStatusCode status = response.getStatusCode();
 				String content = response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE);
 				String location = response.getHeaders().getFirst(HttpHeaders.LOCATION);
+				String retryAfter = response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER);
 				log.trace("Received TrustDeck response (method: {}, status: {}, body size: {} bytes).", method,
 						status.value(), bytes.length);
 
@@ -263,7 +264,7 @@ public final class TrustDeckHttpClient {
 				if (!expected.contains(status.value())) {
 					// No, we didn't
 					log.debug("Unexpected TrustDeck response status: {}. Expected: {}.", status.value(), expected);
-					throw responseException(status, bytes, content, location);
+					throw responseException(status, bytes, content, location, retryAfter);
 				}
 
 				// Parse returned body into the proper content object
@@ -305,9 +306,10 @@ public final class TrustDeckHttpClient {
 	 * @param body the response body
 	 * @param contentType the response content type
 	 * @param location the response location header
+	 * @param retryAfter the Retry-After response header
 	 * @return the created response exception
 	 */
-	private TrustDeckResponseException responseException(HttpStatusCode status, byte[] body, String contentType, String location) {
+	private TrustDeckResponseException responseException(HttpStatusCode status, byte[] body, String contentType, String location, String retryAfter) {
 		String raw = new String(body, StandardCharsets.UTF_8);
 		if (raw.length() > MAX_ERROR_BODY_LENGTH) {
 			raw = raw.substring(0, MAX_ERROR_BODY_LENGTH);
@@ -320,7 +322,7 @@ public final class TrustDeckHttpClient {
 			// Preserve the raw response when it is not a status-info document
 		}
 
-		return new TrustDeckResponseException("TrustDeck returned HTTP " + status.value() + ".", status, info, raw, contentType, location);
+		return new TrustDeckResponseException("TrustDeck returned HTTP " + status.value() + ".", status, info, raw, contentType, location, retryAfter);
 	}
 
 	/**

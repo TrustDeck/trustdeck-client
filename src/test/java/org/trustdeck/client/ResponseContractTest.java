@@ -32,6 +32,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.trustdeck.client.exception.RecordLinkageConflictException;
+import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.Domain;
 import org.trustdeck.client.model.Entity;
 import org.trustdeck.client.model.ProjectImage;
@@ -84,6 +85,14 @@ class ResponseContractTest {
 		assertFalse(exception.getCandidates().isEmpty());
 	}
 
+	@Test
+	void preservesRetryAfterResponseHeader() {
+		TrustDeckResponseException exception = assertThrows(TrustDeckResponseException.class,
+				() -> client.domains().get("retry-after"));
+
+		assertEquals("7", exception.getRetryAfter());
+	}
+
 	private static void respond(HttpExchange exchange) throws IOException {
 		String path = exchange.getRequestURI().getPath();
 		int status = 200;
@@ -102,6 +111,9 @@ class ResponseContractTest {
 		} else if (path.endsWith("/image")) {
 			contentType = "image/png";
 			body = new byte[] { 1, 2, 3 };
+		} else if (path.equals("/api/domains/retry-after")) {
+			status = 429;
+			exchange.getResponseHeaders().set("Retry-After", "7");
 		} else if (path.endsWith("/entities/type") && exchange.getRequestMethod().equals("POST")) {
 			status = 409;
 			body = "[{\"id\":\"candidate\"}]".getBytes();

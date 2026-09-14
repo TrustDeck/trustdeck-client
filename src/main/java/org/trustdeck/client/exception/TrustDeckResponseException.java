@@ -53,6 +53,9 @@ public class TrustDeckResponseException extends RuntimeException {
 	/** Response location. */
 	private final String location;
 
+	/** Optional Retry-After response header value. */
+	private final String retryAfter;
+
 	/**
 	 * Constructor that also defines the triggering status code and a message.
 	 *
@@ -60,7 +63,7 @@ public class TrustDeckResponseException extends RuntimeException {
 	 * @param responseStatusCode the status code of the response of the exception-causing request
 	 */
 	public TrustDeckResponseException(String message, HttpStatusCode responseStatusCode) {
-		this(message, responseStatusCode, null, null, null, null);
+		this(message, responseStatusCode, null, null, null, null, null);
 	}
 
 	/**
@@ -74,6 +77,21 @@ public class TrustDeckResponseException extends RuntimeException {
 	 * @param location response location
 	 */
 	public TrustDeckResponseException(String message, HttpStatusCode responseStatusCode, HttpStatusInfo statusInfo, String rawBody, String contentType, String location) {
+		this(message, responseStatusCode, statusInfo, rawBody, contentType, location, null);
+	}
+
+	/**
+	 * Creates an exception with complete response diagnostics and Retry-After information.
+	 *
+	 * @param message failure message
+	 * @param responseStatusCode HTTP status
+	 * @param statusInfo parsed status information
+	 * @param rawBody bounded raw body
+	 * @param contentType response content type
+	 * @param location response location
+	 * @param retryAfter optional Retry-After response header value
+	 */
+	public TrustDeckResponseException(String message, HttpStatusCode responseStatusCode, HttpStatusInfo statusInfo, String rawBody, String contentType, String location, String retryAfter) {
 		super(message);
 
 		this.responseStatusCode = responseStatusCode;
@@ -82,5 +100,6 @@ public class TrustDeckResponseException extends RuntimeException {
 		this.rawBody = rawBody;
 		this.contentType = contentType;
 		this.location = location;
+		this.retryAfter = retryAfter;
 	}
 }
