@@ -27,14 +27,14 @@
 	</licenses>
 
 	<dependencies>
-		<!-- License: MIT -->
+		<!-- Logging (License: MIT) -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>2.0.17</version>
 		</dependency>
 		
-		<!-- License: MIT -->
+		<!-- Logging (License: MIT) -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
@@ -42,21 +42,21 @@
 			<scope>runtime</scope>
 		</dependency>
 		
-		<!-- License: Apache-2.0 -->
+		<!-- Web utilities (License: Apache-2.0) -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 			<version>6.2.19</version>
 		</dependency>
 		
-		<!-- License: Apache-2.0 -->
+		<!-- Authentication (License: Apache-2.0) -->
 		<dependency>
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-admin-client</artifactId>
 			<version>26.0.6</version>
 		</dependency>
 		
-		<!-- License: MIT -->
+		<!-- Code generation (License: MIT) -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -64,7 +64,7 @@
 			<version>1.18.38</version>
 		</dependency>
 		
-		<!-- License: Apache-2.0 -->
+		<!-- JSON manipulation for model representation (License: Apache-2.0) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
@@ -86,7 +86,7 @@
 			<version>${jackson.databind.version}</version>
 		</dependency>
 		
-		<!-- License: EPL-2.0 -->
+		<!-- Testing (License: EPL-2.0; compatible with Apache-2.0) -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
@@ -94,7 +94,7 @@
 			<scope>test</scope>
 		</dependency>
 		
-		<!-- License: Apache-2.0 -->
+		<!-- Testing (License: Apache-2.0) -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-test</artifactId>
