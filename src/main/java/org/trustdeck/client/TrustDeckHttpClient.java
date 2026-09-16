@@ -92,24 +92,27 @@ public final class TrustDeckHttpClient {
 	 * @param readTimeout maximum time between response bytes
 	 * @throws TrustDeckClientLibraryException if the URL or timeout values are invalid
 	 */
-	public TrustDeckHttpClient(String serviceUrl, AccessTokenProvider tokenProvider,
-			Duration connectTimeout, Duration readTimeout) {
+	public TrustDeckHttpClient(String serviceUrl, AccessTokenProvider tokenProvider, Duration connectTimeout, Duration readTimeout) {
 		try {
 			baseUri = UriComponentsBuilder.fromUriString(require(serviceUrl, "serviceUrl")).build().toUri();
+			
 			if (connectTimeout == null || connectTimeout.isZero() || connectTimeout.isNegative()
 					|| readTimeout == null || readTimeout.isZero() || readTimeout.isNegative()) {
 				throw new IllegalArgumentException("HTTP timeouts must be positive.");
 			}
 
-			// SimpleClientHttpRequestFactory applies connect and socket read limits to RestClient.
+			// SimpleClientHttpRequestFactory applies connect and socket read limits to RestClient
 			SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
 			requestFactory.setConnectTimeout(connectTimeout);
 			requestFactory.setReadTimeout(readTimeout);
+			
 			// Remove trailing slashes before creating the client from the given URI.
 			restClient = RestClient.builder().baseUrl(baseUri.toString().replaceAll("/$", ""))
 					.requestFactory(requestFactory).build();
+			
 			mapper = new ObjectMapper().registerModule(new JavaTimeModule())
 					.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+			
 			this.tokenProvider = tokenProvider;
 		} catch (RuntimeException e) {
 			throw new TrustDeckClientLibraryException("Invalid TrustDeck client configuration.", e);
@@ -248,8 +251,7 @@ public final class TrustDeckHttpClient {
 			}
 
 			// Execute the request, validate the response status, and deserialize the response body into the expected type
-			log.trace("Executing TrustDeck {} request (authenticated: {}, body present: {}).", method, authenticated,
-					body != null);
+			log.trace("Executing TrustDeck {} request (authenticated: {}, body present: {}).", method, authenticated, body != null);
 			return request.exchange((requestHeaders, response) -> {
 				// Extract info from response
 				byte[] bytes = response.getBody().readAllBytes();
@@ -257,13 +259,13 @@ public final class TrustDeckHttpClient {
 				String content = response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE);
 				String location = response.getHeaders().getFirst(HttpHeaders.LOCATION);
 				String retryAfter = response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER);
-				log.trace("Received TrustDeck response (method: {}, status: {}, body size: {} bytes).", method,
-						status.value(), bytes.length);
+				
+				log.trace("Received TrustDeck response (method: " + method + ", status: " + status.value() + ", body size: " + bytes.length + " bytes).");
 
 				// Check if we expected the status code that was returned
 				if (!expected.contains(status.value())) {
 					// No, we didn't
-					log.debug("Unexpected TrustDeck response status: {}. Expected: {}.", status.value(), expected);
+					log.debug("Unexpected TrustDeck response status: " + status.value() + ". Expected: " + expected + ".");
 					throw responseException(status, bytes, content, location, retryAfter);
 				}
 

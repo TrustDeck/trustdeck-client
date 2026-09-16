@@ -14,10 +14,10 @@
 
 	<groupId>org.trustdeck</groupId>
 	<artifactId>client</artifactId>
-	<version>1.0.2-SNAPSHOT</version>
+	<version>1.0.2</version>
 	<packaging>jar</packaging>
 	<name>TrustDeck Client Library</name>
-	<description>A client library for interacting with the TrustDeck services.</description>
+	<description>A client library for interacting with the TrustDeck backend services.</description>
 	<licenses>
 		<license>
 			<name>Apache License, Version 2.0</name>

@@ -44,9 +44,16 @@ import org.trustdeck.client.model.SearchResult;
  * @author Armin Müller
  */
 class ResponseContractTest {
+
+	/** HTTP server used for testing the responses. */
 	private static HttpServer server;
+
+	/** TrustDeck instance to perform requests against. */
 	private static TrustDeckClient client;
 
+	/**
+	 * Sets up the environment before each test.
+	 */
 	@BeforeAll
 	static void start() throws IOException {
 		server = HttpServer.create(new InetSocketAddress(0), 0);
@@ -55,11 +62,17 @@ class ResponseContractTest {
 		client = new TrustDeckClient("http://localhost:" + server.getAddress().getPort(), () -> "token");
 	}
 
+	/**
+	 * Stops the test server after each test.
+	 */
 	@AfterAll
 	static void stop() {
 		server.stop(0);
 	}
 
+	/**
+	 * Verifies handling of partial, empty, validation, and binary responses.
+	 */
 	@Test
 	void handlesPartialEmptyAndBinaryResponses() {
 		assertEquals("created", client.domains().create(new Domain()).getName());
@@ -76,6 +89,10 @@ class ResponseContractTest {
 		assertArrayEquals(new byte[] { 1, 2, 3 }, image.getData());
 	}
 
+	/**
+	 * Verifies that entity creation conflicts are converted to a
+	 * {@link RecordLinkageConflictException} containing the returned candidates.
+	 */
 	@Test
 	void convertsEntityConflictCandidates() {
 		RecordLinkageConflictException exception = assertThrows(RecordLinkageConflictException.class,
@@ -85,6 +102,10 @@ class ResponseContractTest {
 		assertFalse(exception.getCandidates().isEmpty());
 	}
 
+	/**
+	 * Verifies that the {@code Retry-After} response header is preserved in the
+	 * resulting {@link TrustDeckResponseException}.
+	 */
 	@Test
 	void preservesRetryAfterResponseHeader() {
 		TrustDeckResponseException exception = assertThrows(TrustDeckResponseException.class,
@@ -93,6 +114,12 @@ class ResponseContractTest {
 		assertEquals("7", exception.getRetryAfter());
 	}
 
+	/**
+	 * Provides HTTP responses required by the public endpoint contract tests.
+	 *
+	 * @param exchange HTTP exchange to respond to
+	 * @throws IOException if writing the HTTP response fails
+	 */
 	private static void respond(HttpExchange exchange) throws IOException {
 		String path = exchange.getRequestURI().getPath();
 		int status = 200;

@@ -25,16 +25,23 @@ import org.junit.jupiter.api.Test;
 import org.trustdeck.client.model.HealthStatus;
 
 /**
- * Basic shared-mapper compatibility coverage.
+ * Tests JSON serialization and deserialization behavior of model classes.
  *
  * @author Armin Müller
  */
 class ModelJsonTest {
 	
+	/**
+	 * Verifies that Java time values are parsed correctly and unknown JSON fields
+	 * are ignored during deserialization.
+	 *
+	 * @throws Exception if JSON deserialization fails
+	 */
 	@Test
 	void parsesJavaTimeAndUnknownFields() throws Exception {
 		TrustDeckHttpClient client = new TrustDeckHttpClient("https://example.invalid", () -> "token");
 		HealthStatus health = client.mapper().readValue("{\"status\":\"UP\",\"service\":\"backend\",\"timestamp\":\"2026-01-01T00:00:00Z\",\"newField\":true}", HealthStatus.class);
+		
 		assertEquals("UP", health.getStatus());
 		assertEquals(OffsetDateTime.parse("2026-01-01T00:00:00Z"), health.getTimestamp());
 	}

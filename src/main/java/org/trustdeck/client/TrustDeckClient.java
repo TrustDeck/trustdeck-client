@@ -68,8 +68,7 @@ public class TrustDeckClient {
 		validate(config);
 
 		tokenService = new TrustDeckTokenService(config);
-		http = new TrustDeckHttpClient(config.getServiceUrl(), tokenService,
-				config.getConnectTimeout(), config.getReadTimeout());
+		http = new TrustDeckHttpClient(config.getServiceUrl(), tokenService, config.getConnectTimeout(), config.getReadTimeout());
 		domains = new Domains(http);
 		projects = new Projects(http);
 		baseEntityTypes = new BaseEntityTypes(http);
@@ -83,8 +82,7 @@ public class TrustDeckClient {
 	 * @param tokenProvider bearer-token provider
 	 */
 	public TrustDeckClient(String serviceUrl, AccessTokenProvider tokenProvider) {
-		this(serviceUrl, tokenProvider, TrustDeckHttpClient.DEFAULT_CONNECT_TIMEOUT,
-				TrustDeckHttpClient.DEFAULT_READ_TIMEOUT);
+		this(serviceUrl, tokenProvider, TrustDeckHttpClient.DEFAULT_CONNECT_TIMEOUT, TrustDeckHttpClient.DEFAULT_READ_TIMEOUT);
 	}
 
 	/**
@@ -95,8 +93,7 @@ public class TrustDeckClient {
 	 * @param connectTimeout maximum time to establish a connection
 	 * @param readTimeout maximum time between response bytes
 	 */
-	public TrustDeckClient(String serviceUrl, AccessTokenProvider tokenProvider,
-			Duration connectTimeout, Duration readTimeout) {
+	public TrustDeckClient(String serviceUrl, AccessTokenProvider tokenProvider, Duration connectTimeout, Duration readTimeout) {
 		tokenService = null;
 		http = new TrustDeckHttpClient(serviceUrl, tokenProvider, connectTimeout, readTimeout);
 		domains = new Domains(http);

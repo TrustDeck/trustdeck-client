@@ -32,6 +32,35 @@ import org.trustdeck.client.TrustDeckHttpClient;
 @Getter
 public class TrustDeckClientConfig {
 
+	/** The base URL of the TrustDeck instance to work with. */
+	private String serviceUrl;
+
+	/** The URL of the Keycloak authentication server for this TrustDeck instance. */
+	private String keycloakUrl;
+
+	/** The name of the Keycloak realm. */
+	private String realm;
+
+	/** The client ID for authenticating against Keycloak. */
+	private String clientId;
+
+	/** The client secret for authenticating against Keycloak. */
+	private String clientSecret;
+
+	/** The user name for authenticating against Keycloak. */
+	private String userName;
+
+	/** The user's password for authenticating against Keycloak. */
+	private String password;
+
+	/** Maximum time to establish an HTTP connection. */
+	@Builder.Default
+	private Duration connectTimeout = TrustDeckHttpClient.DEFAULT_CONNECT_TIMEOUT;
+
+	/** Maximum time between response bytes. */
+	@Builder.Default
+	private Duration readTimeout = TrustDeckHttpClient.DEFAULT_READ_TIMEOUT;
+
 	/**
 	 * Creates empty configuration for builder-generated population.
 	 */
@@ -81,33 +110,4 @@ public class TrustDeckClientConfig {
 		this.connectTimeout = connectTimeout;
 		this.readTimeout = readTimeout;
 	}
-
-	/** The base URL of the TrustDeck instance to work with. */
-	private String serviceUrl;
-
-	/** The URL of the Keycloak authentication server for this TrustDeck instance. */
-	private String keycloakUrl;
-
-	/** The name of the Keycloak realm. */
-	private String realm;
-
-	/** The client ID for authenticating against Keycloak. */
-	private String clientId;
-
-	/** The client secret for authenticating against Keycloak. */
-	private String clientSecret;
-
-	/** The user name for authenticating against Keycloak. */
-	private String userName;
-
-	/** The user's password for authenticating against Keycloak. */
-	private String password;
-
-	/** Maximum time to establish an HTTP connection. */
-	@Builder.Default
-	private Duration connectTimeout = TrustDeckHttpClient.DEFAULT_CONNECT_TIMEOUT;
-
-	/** Maximum time between response bytes. */
-	@Builder.Default
-	private Duration readTimeout = TrustDeckHttpClient.DEFAULT_READ_TIMEOUT;
 }
