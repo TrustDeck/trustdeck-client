@@ -2,6 +2,14 @@
 
 Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
 
+## Version 1.1.0 API
+
+Project-scoped resources are reached through an immutable `ProjectScope`. Calling
+`client.project("abbr")`, or navigating from that scope, makes no HTTP request and
+does not acquire a token. A scope keeps its original abbreviation after a project
+rename. `scope.get("other")` is the approved convenience lookup and does not
+rebind the scope.
+
 ## Requirements
 
 The library requires Java 21 or newer. Maven is used to build the project and to run the included example.
@@ -37,6 +45,16 @@ TrustDeckClientConfig config = TrustDeckClientConfig.builder()
 TrustDeckClient trustdeck = new TrustDeckClient(config);
 ```
 
+The active Maven dependency is:
+
+```xml
+<dependency>
+    <groupId>org.trustdeck</groupId>
+    <artifactId>client</artifactId>
+    <version>1.1.0</version>
+</dependency>
+```
+
 ## Running the Example
 
 After setting the connection variables, run the complete example with:
@@ -63,24 +81,24 @@ Project project = Project.builder()
 	.storePseudonyms(true)
 	.build();
 Project createdProject = trustdeck.projects().create(project);
+ProjectScope projectScope = trustdeck.project(projectAbbreviation);
 
 Domain domain = Domain.builder()
 	.name("research-domain")
 	.prefix("RD")
-	.projectAbbreviation(createdProject.getAbbreviation())
 	.build();
-Domain createdDomain = trustdeck.domains().create(domain);
+Domain createdDomain = projectScope.domains().create(domain);
 
 // Create a pseudonym from an identifier item
 IdentifierItem identifierItem = IdentifierItem.builder()
 	.identifier("TestID1")
 	.idType("TestType")
 	.build();
-Pseudonym createdPseudonym1 = trustdeck.pseudonyms(createdDomain.getName())
+Pseudonym createdPseudonym1 = projectScope.pseudonyms(createdDomain.getName())
 	.create(identifierItem, false);
 
 // Create a pseudonym directly from an identifier and identifier type
-Pseudonym createdPseudonym2 = trustdeck.pseudonyms(createdDomain.getName())
+Pseudonym createdPseudonym2 = projectScope.pseudonyms(createdDomain.getName())
 	.create("TestID2", "TestType", false);
 
 // Create a pseudonym with additional validity information
@@ -92,22 +110,31 @@ Pseudonym pseudonym = Pseudonym.builder()
 	.validFrom(LocalDateTime.now())
 	.validityTime("1 week")
 	.build();
-Pseudonym createdPseudonym3 = trustdeck.pseudonyms(createdDomain.getName())
+Pseudonym createdPseudonym3 = projectScope.pseudonyms(createdDomain.getName())
 	.create(pseudonym, false);
 
-Pseudonym readPseudonym = trustdeck.pseudonyms(createdDomain.getName())
+Pseudonym readPseudonym = projectScope.pseudonyms(createdDomain.getName())
 	.get(createdPseudonym1.getPsn());
 ```
 
-Entities are scoped by project abbreviation and entity type. Build JSON payload data with Jackson and use a project entity type when creating entities:
+Entities are scoped by project and entity type. Build JSON payload data with Jackson and use a project entity type when creating entities:
 
 ```java
 ObjectMapper mapper = new ObjectMapper();
 Entity entity = new Entity();
 entity.setData(mapper.valueToTree(Map.of("givenName", "Ada", "familyName", "Lovelace")));
 
-Entity created = trustdeck.entities(projectAbbreviation, "patient").create(entity);
+Entity created = projectScope.entities("patient").create(entity);
 ```
+
+Project domains expose `getAll()` as `List<ProjectDomain>` summaries from the
+project route. Their `search(query)` method is deliberately an unfiltered alias
+of global `client.domains().search(query)` and adds no project query parameter.
+For domain create and update calls, a missing `projectAbbreviation` is filled in
+on a copied payload. Blank or conflicting values are rejected locally;
+case-insensitive matching preserves the caller's supplied value. The copy does
+not mutate the caller or nested algorithm data. This context does not prove or
+enforce domain ownership; backend authorization remains authoritative.
 
 ## Custom Access Tokens
 

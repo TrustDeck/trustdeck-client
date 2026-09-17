@@ -26,12 +26,8 @@ import org.trustdeck.client.config.TrustDeckClientConfig;
 import org.trustdeck.client.model.HealthStatus;
 import org.trustdeck.client.service.BaseEntityTypes;
 import org.trustdeck.client.service.Domains;
-import org.trustdeck.client.service.Entities;
-import org.trustdeck.client.service.EntityTypes;
 import org.trustdeck.client.service.Permissions;
-import org.trustdeck.client.service.ProjectImages;
 import org.trustdeck.client.service.Projects;
-import org.trustdeck.client.service.Pseudonyms;
 import org.trustdeck.client.service.TrustDeckTokenService;
 
 /**
@@ -112,13 +108,13 @@ public class TrustDeckClient {
 	}
 
 	/**
-	 * Returns pseudonym operations scoped to a domain.
+	 * Creates an immutable project scope without making an HTTP request.
 	 *
-	 * @param domainName domain name
-	 * @return scoped pseudonym service
+	 * @param projectAbbreviation project abbreviation
+	 * @return immutable project scope
 	 */
-	public Pseudonyms pseudonyms(String domainName) {
-		return new Pseudonyms(http, domainName);
+	public ProjectScope project(String projectAbbreviation) {
+		return new ProjectScope(http, projects, domains, permissions, projectAbbreviation);
 	}
 
 	/**
@@ -131,43 +127,12 @@ public class TrustDeckClient {
 	}
 
 	/**
-	 * Returns image operations scoped to a project.
-	 *
-	 * @param project project abbreviation
-	 * @return scoped image service
-	 */
-	public ProjectImages projectImages(String project) {
-		return new ProjectImages(http, project);
-	}
-
-	/**
 	 * Returns base entity-type operations.
 	 *
 	 * @return base type service
 	 */
 	public BaseEntityTypes baseEntityTypes() {
 		return baseEntityTypes;
-	}
-
-	/**
-	 * Returns entity-type operations scoped to a project.
-	 *
-	 * @param project project abbreviation
-	 * @return scoped entity-type service
-	 */
-	public EntityTypes entityTypes(String project) {
-		return new EntityTypes(http, project);
-	}
-
-	/**
-	 * Returns entity operations scoped to a project and type.
-	 *
-	 * @param project project abbreviation
-	 * @param type entity type name
-	 * @return scoped entity service
-	 */
-	public Entities entities(String project, String type) {
-		return new Entities(http, project, type);
 	}
 
 	/**

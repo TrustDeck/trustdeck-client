@@ -86,7 +86,7 @@ public class Projects {
 	 * @param projectAbbreviation project abbreviation
 	 * @return project domains
 	 */
-	public List<ProjectDomain> getDomains(String projectAbbreviation) {
+	public List<ProjectDomain> getDomainsScoped(String projectAbbreviation) {
 		return http.exchange(HttpMethod.GET, http.uri(path(projectAbbreviation, "domains"), Map.of()), null,
 				new ParameterizedTypeReference<List<ProjectDomain>>() { }, Set.of(200), true).getBody();
 	}
@@ -97,7 +97,7 @@ public class Projects {
 	 * @param projectAbbreviation project abbreviation
 	 * @return statistics JSON
 	 */
-	public JsonNode getStatistics(String projectAbbreviation) {
+	public JsonNode getStatisticsScoped(String projectAbbreviation) {
 		return http.exchange(HttpMethod.GET, http.uri(path(projectAbbreviation, "statistics"), Map.of()), null,
 				JsonNode.class, Set.of(200), true).getBody();
 	}
@@ -109,7 +109,7 @@ public class Projects {
 	 * @param updateProject project definition
 	 * @return the updated project, when successful
 	 */
-	public Project update(String projectAbbreviation, Project updateProject) {
+	public Project updateScoped(String projectAbbreviation, Project updateProject) {
 		return request(HttpMethod.PUT, path(projectAbbreviation), Map.of(), updateProject, Set.of(200));
 	}
 
@@ -120,7 +120,7 @@ public class Projects {
 	 * @param deleteDate scheduled deletion date, or {@code null}
 	 * @return {@code true} when accepted
 	 */
-	public boolean delete(String projectAbbreviation, OffsetDateTime deleteDate) {
+	public boolean deleteScoped(String projectAbbreviation, OffsetDateTime deleteDate) {
 		LinkedHashMap<String, Object> reqParam = new LinkedHashMap<String, Object>();
 		reqParam.put("deleteDate", deleteDate);
 
@@ -136,8 +136,8 @@ public class Projects {
 	 * @param projectAbbreviation project abbreviation
 	 * @return {@code true} when accepted
 	 */
-	public boolean delete(String projectAbbreviation) {
-		return delete(projectAbbreviation, null);
+	public boolean deleteScoped(String projectAbbreviation) {
+		return deleteScoped(projectAbbreviation, null);
 	}
 
 	/**
@@ -166,6 +166,7 @@ public class Projects {
 		path[0] = "api";
 		path[1] = "projects";
 		path[2] = TrustDeckHttpClient.require(projectAbbreviation, "projectAbbreviation");
+		
 		System.arraycopy(suffix, 0, path, 3, suffix.length);
 		
 		return path;

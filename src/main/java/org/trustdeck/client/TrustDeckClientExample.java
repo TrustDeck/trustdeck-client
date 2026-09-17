@@ -70,7 +70,8 @@ public class TrustDeckClientExample {
 		String entityTypeName = "ExampleEntityType" + suffix;
 		UUID entityId = null;
 		String pseudonymValue = null;
-		int sleepTime = 1000;
+		int sleepTime = 0; // Set this to e.g. 1000 to actually see what happens during execution of the code below and not only a quick rush of outputs
+		ProjectScope projectScope = client.project(projectAbbreviation); // Using ProjectScope here is just for convenience
 
 		try {
 			System.out.println("--- Examples for the usage of the client library of TrustDeck. ---");
@@ -86,7 +87,7 @@ public class TrustDeckClientExample {
 					.storePseudonyms(true)
 					.build();
 			client.projects().create(project);
-			System.out.println(" - Project: " + client.projects().get(projectAbbreviation));
+			System.out.println(" - Project: " + projectScope.get());
 
 			sleep(sleepTime);
 			System.out.println("\nUpload and read a small, valid 1x1 PNG image for the project.");
@@ -95,8 +96,8 @@ public class TrustDeckClientExample {
 					.mimeType("image/png")
 					.filename("example.png")
 					.build();
-			client.projectImages(projectAbbreviation).create(image);
-			System.out.println(" - Project image: " + client.projectImages(projectAbbreviation).get());
+			projectScope.image().create(image);
+			System.out.println(" - Project image: " + projectScope.image().get());
 
 			sleep(sleepTime);
 			System.out.println("\nCreate and read a globally available base entity type.");
@@ -124,8 +125,8 @@ public class TrustDeckClientExample {
 					.prefix("EX" + suffix.substring(suffix.length() - 4))
 					.projectAbbreviation(projectAbbreviation)
 					.build();
-			client.domains().create(domain);
-			System.out.println(" - Domain: " + client.domains().get(projectDomainName));
+			projectScope.domains().create(domain);
+			System.out.println(" - Domain: " + projectScope.domains().get(projectDomainName));
 
 			sleep(sleepTime);
 			System.out.println("\nCreate and read a project-scoped entity type.");
@@ -135,27 +136,27 @@ public class TrustDeckClientExample {
 					.baseTypeName(baseTypeName)
 					.typeDefinition(typeDefinition)
 					.build();
-			client.entityTypes(projectAbbreviation).create(entityType);
-			System.out.println(" - Entity type: " + client.entityTypes(projectAbbreviation).get(entityTypeName));
+			projectScope.entityTypes().create(entityType);
+			System.out.println(" - Entity type: " + projectScope.entityTypes().get(entityTypeName));
 
 			sleep(sleepTime);
 			System.out.println("\nCreate and read an entity, then demonstrate the related pseudonym lookup.");
 			JsonNode entityData = mapper.createObjectNode().put("example", "value");
 			Entity entity = Entity.builder().data(entityData).build();
 			
-			Entity createdEntity = client.entities(projectAbbreviation, entityTypeName).create(entity);
+			Entity createdEntity = projectScope.entities(entityTypeName).create(entity);
 			entityId = createdEntity.getTrustdeckID();
-			System.out.println(" - Entity: " + client.entities(projectAbbreviation, entityTypeName).get(entityId));
+			System.out.println(" - Entity: " + projectScope.entities(entityTypeName).get(entityId));
 
 			sleep(sleepTime);
 			System.out.println("\nCreate, read, and validate a pseudonym in the example domain.");
 			String identifier = "example-" + suffix;
 			String idType = "example-id";
 			
-			Pseudonym pseudonym = client.pseudonyms(projectDomainName).create(identifier, idType);
+			Pseudonym pseudonym = projectScope.pseudonyms(projectDomainName).create(identifier, idType);
 			pseudonymValue = pseudonym.getPsn();
-			System.out.println(" - Pseudonym: " + client.pseudonyms(projectDomainName).get(pseudonymValue));
-			System.out.println(" - Pseudonym valid: " + client.pseudonyms(projectDomainName).validate(pseudonymValue));
+			System.out.println(" - Pseudonym: " + projectScope.pseudonyms(projectDomainName).get(pseudonymValue));
+			System.out.println(" - Pseudonym valid: " + projectScope.pseudonyms(projectDomainName).validate(pseudonymValue));
 			
 			sleep(sleepTime);
 			System.out.println("\n--- Successfully completed the examples ---");
@@ -164,7 +165,7 @@ public class TrustDeckClientExample {
 				System.out.println("\nDelete resources in reverse dependency order.");
 			
 				if (pseudonymValue != null) {
-					if (client.pseudonyms(projectDomainName).delete(pseudonymValue)) {
+					if (projectScope.pseudonyms(projectDomainName).delete(pseudonymValue)) {
 						System.out.println(" - Deleted pseudonym.");
 					} else {
 						System.out.println(" - Could not delete pseudonym.");
@@ -172,20 +173,20 @@ public class TrustDeckClientExample {
 				}
 				
 				if (entityId != null) {
-					if (client.entities(projectAbbreviation, entityTypeName).delete(entityId)) {
+					if (projectScope.entities(entityTypeName).delete(entityId)) {
 						System.out.println(" - Deleted entity.");
 					} else {
 						System.out.println(" - Could not delete entity.");
 					}
 				}
 				
-				if (client.entityTypes(projectAbbreviation).delete(entityTypeName)) {
+				if (projectScope.entityTypes().delete(entityTypeName)) {
 					System.out.println(" - Deleted entity type.");
 				} else {
 					System.out.println(" - Could not delete entity type.");
 				}
 				
-				if (client.domains().delete(projectDomainName, false)) {
+				if (projectScope.domains().delete(projectDomainName, false)) {
 					System.out.println(" - Deleted domain.");
 				} else {
 					System.out.println(" - Could not delete domain.");
@@ -193,13 +194,13 @@ public class TrustDeckClientExample {
 				
 				// The TrustDeck API currently exposes no delete operation for base entity types
 				
-				if (client.projectImages(projectAbbreviation).delete()) {
+				if (projectScope.image().delete()) {
 					System.out.println(" - Deleted project image.");
 				} else {
 					System.out.println(" - Could not delete project image.");
 				}
 				
-				if (client.projects().delete(projectAbbreviation)) {
+				if (projectScope.delete()) {
 					System.out.println(" - Deleted project.");
 				} else {
 					System.out.println(" - Could not delete project.");
@@ -214,6 +215,9 @@ public class TrustDeckClientExample {
 
 	/**
 	 * Reads a configuration value from a system property or environment variable.
+	 * 
+	 * @param key the name of the configuration attribute
+	 * @return the value of the desired attribute, or {@code null} if it couldn't be found
 	 */
 	private static String value(String key) {
 		String value = System.getProperty(key);
@@ -221,6 +225,14 @@ public class TrustDeckClientExample {
 		return value == null ? System.getenv(key) : value;
 	}
 	
+	/**
+	 * Helper to delay execution of the example code so the user actually 
+	 * has time to look at what is happening. Otherwise, all the example
+	 * code is executed in a quick rush. This does not change anything in
+	 * the actual backend-behavior.
+	 * 
+	 * @param millis the delay in milliseconds
+	 */
 	private static void sleep(int millis) {
 		try {
 			Thread.sleep(millis);
