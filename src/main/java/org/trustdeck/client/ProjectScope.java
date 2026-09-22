@@ -19,8 +19,8 @@ package org.trustdeck.client;
 
 import java.time.OffsetDateTime;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.trustdeck.client.model.Project;
+import org.trustdeck.client.model.ProjectStatistics;
 import org.trustdeck.client.service.Domains;
 import org.trustdeck.client.service.Entities;
 import org.trustdeck.client.service.EntityTypes;
@@ -126,9 +126,9 @@ public final class ProjectScope {
 	/**
 	 * Retrieves statistics for the captured project.
 	 * 
-	 * @return statistics JSON
+	 * @return typed project statistics
 	 */
-	public JsonNode getStatistics() {
+	public ProjectStatistics getStatistics() {
 		return projects.getStatisticsScoped(projectAbbreviation);
 	}
 

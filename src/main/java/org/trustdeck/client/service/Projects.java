@@ -28,8 +28,7 @@ import org.springframework.http.HttpMethod;
 import org.trustdeck.client.TrustDeckHttpClient;
 import org.trustdeck.client.model.Project;
 import org.trustdeck.client.model.ProjectDomain;
-
-import com.fasterxml.jackson.databind.JsonNode;
+import org.trustdeck.client.model.ProjectStatistics;
 
 /**
  * Synchronous operations for TrustDeck projects.
@@ -95,11 +94,11 @@ public class Projects {
 	 * Gets project statistics.
 	 *
 	 * @param projectAbbreviation project abbreviation
-	 * @return statistics JSON
+	 * @return typed project statistics
 	 */
-	public JsonNode getStatisticsScoped(String projectAbbreviation) {
+	public ProjectStatistics getStatisticsScoped(String projectAbbreviation) {
 		return http.exchange(HttpMethod.GET, http.uri(path(projectAbbreviation, "statistics"), Map.of()), null,
-				JsonNode.class, Set.of(200), true).getBody();
+				ProjectStatistics.class, Set.of(200), true).getBody();
 	}
 
 	/**

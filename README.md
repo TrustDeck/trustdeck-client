@@ -2,7 +2,7 @@
 
 Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
 
-## Version 1.1.0 API
+## Version 2.0.0 API
 
 Project-scoped resources are reached through an immutable `ProjectScope`. Calling
 `client.project("abbr")`, or navigating from that scope, makes no HTTP request and
@@ -51,9 +51,21 @@ The active Maven dependency is:
 <dependency>
     <groupId>org.trustdeck</groupId>
     <artifactId>client</artifactId>
-    <version>1.1.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
+
+Client 2.0.0 supports the typed statistics responses introduced and completed
+in backend v2.3.0. The client and backend use independent version numbers.
+
+```java
+ProjectStatistics projectStatistics = trustdeck.project("research").getStatistics();
+SystemStatistics systemStatistics = trustdeck.system().getStatistics();
+```
+
+Project statistics requires `project:statistics` on the selected project.
+System statistics requires the global `system:statistics` permission. These
+permissions are enforced by the backend.
 
 ## Running the Example
 
