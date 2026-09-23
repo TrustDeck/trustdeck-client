@@ -17,8 +17,11 @@
 
 package org.trustdeck.client.config;
 
+import java.time.Duration;
+
 import lombok.Builder;
 import lombok.Getter;
+import org.trustdeck.client.TrustDeckHttpClient;
 
 /**
  * Configuration builder class as an alternative way to configure the client.
@@ -28,35 +31,6 @@ import lombok.Getter;
 @Builder
 @Getter
 public class TrustDeckClientConfig {
-
-	/**
-	 * Creates empty configuration for builder-generated population.
-	 */
-	public TrustDeckClientConfig() {
-		// Nothing to do
-	}
-
-	/**
-	 * Creates configuration with all authentication and service values.
-	 *
-	 * @param serviceUrl TrustDeck service URL
-	 * @param keycloakUrl Keycloak URL
-	 * @param realm Keycloak realm
-	 * @param clientId Keycloak client ID
-	 * @param clientSecret Keycloak client secret
-	 * @param userName user name
-	 * @param password password
-	 */
-	public TrustDeckClientConfig(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret,
-			String userName, String password) {
-		this.serviceUrl = serviceUrl;
-		this.keycloakUrl = keycloakUrl;
-		this.realm = realm;
-		this.clientId = clientId;
-		this.clientSecret = clientSecret;
-		this.userName = userName;
-		this.password = password;
-	}
 
 	/** The base URL of the TrustDeck instance to work with. */
 	private String serviceUrl;
@@ -78,4 +52,62 @@ public class TrustDeckClientConfig {
 
 	/** The user's password for authenticating against Keycloak. */
 	private String password;
+
+	/** Maximum time to establish an HTTP connection. */
+	@Builder.Default
+	private Duration connectTimeout = TrustDeckHttpClient.DEFAULT_CONNECT_TIMEOUT;
+
+	/** Maximum time between response bytes. */
+	@Builder.Default
+	private Duration readTimeout = TrustDeckHttpClient.DEFAULT_READ_TIMEOUT;
+
+	/**
+	 * Creates empty configuration for builder-generated population.
+	 */
+	public TrustDeckClientConfig() {
+		// Nothing to do
+	}
+
+	/**
+	 * Creates configuration with all authentication and service values.
+	 *
+	 * @param serviceUrl TrustDeck service URL
+	 * @param keycloakUrl Keycloak URL
+	 * @param realm Keycloak realm
+	 * @param clientId Keycloak client ID
+	 * @param clientSecret Keycloak client secret
+	 * @param userName user name
+	 * @param password password
+	 */
+	public TrustDeckClientConfig(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret,
+			String userName, String password) {
+		this(serviceUrl, keycloakUrl, realm, clientId, clientSecret, userName, password,
+				TrustDeckHttpClient.DEFAULT_CONNECT_TIMEOUT, TrustDeckHttpClient.DEFAULT_READ_TIMEOUT);
+	}
+
+	/**
+	 * Creates configuration with authentication, service, and transport values.
+	 *
+	 * @param serviceUrl TrustDeck service URL
+	 * @param keycloakUrl Keycloak URL
+	 * @param realm Keycloak realm
+	 * @param clientId Keycloak client ID
+	 * @param clientSecret Keycloak client secret
+	 * @param userName user name
+	 * @param password password
+	 * @param connectTimeout maximum time to establish an HTTP connection
+	 * @param readTimeout maximum time between response bytes
+	 */
+	public TrustDeckClientConfig(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret,
+			String userName, String password, Duration connectTimeout, Duration readTimeout) {
+		this.serviceUrl = serviceUrl;
+		this.keycloakUrl = keycloakUrl;
+		this.realm = realm;
+		this.clientId = clientId;
+		this.clientSecret = clientSecret;
+		this.userName = userName;
+		this.password = password;
+		this.connectTimeout = connectTimeout;
+		this.readTimeout = readTimeout;
+	}
 }

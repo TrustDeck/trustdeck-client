@@ -19,6 +19,7 @@ package org.trustdeck.client;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClient.RequestBodySpec;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -48,6 +50,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public final class TrustDeckHttpClient {
+
+	/** Default connection-establishment timeout. */
+	public static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(5);
+
+	/** Default response-read timeout. */
+	public static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(30);
 
 	/** Maximum number of error-body characters retained in exceptions. */
 	private static final int MAX_ERROR_BODY_LENGTH = 16_384;
@@ -72,13 +80,39 @@ public final class TrustDeckHttpClient {
 	 * @throws TrustDeckClientLibraryException if the URL is invalid
 	 */
 	public TrustDeckHttpClient(String serviceUrl, AccessTokenProvider tokenProvider) {
+		this(serviceUrl, tokenProvider, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT);
+	}
+
+	/**
+	 * Creates a transport with explicit finite HTTP timeouts.
+	 *
+	 * @param serviceUrl TrustDeck service base URL
+	 * @param tokenProvider provider for authenticated requests
+	 * @param connectTimeout maximum time to establish a connection
+	 * @param readTimeout maximum time between response bytes
+	 * @throws TrustDeckClientLibraryException if the URL or timeout values are invalid
+	 */
+	public TrustDeckHttpClient(String serviceUrl, AccessTokenProvider tokenProvider, Duration connectTimeout, Duration readTimeout) {
 		try {
 			baseUri = UriComponentsBuilder.fromUriString(require(serviceUrl, "serviceUrl")).build().toUri();
+			
+			if (connectTimeout == null || connectTimeout.isZero() || connectTimeout.isNegative()
+					|| readTimeout == null || readTimeout.isZero() || readTimeout.isNegative()) {
+				throw new IllegalArgumentException("HTTP timeouts must be positive.");
+			}
 
-			// Remove trailing slashes before creating the client from the given URI
-			restClient = RestClient.builder().baseUrl(baseUri.toString().replaceAll("/$", "")).build();
+			// SimpleClientHttpRequestFactory applies connect and socket read limits to RestClient
+			SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+			requestFactory.setConnectTimeout(connectTimeout);
+			requestFactory.setReadTimeout(readTimeout);
+			
+			// Remove trailing slashes before creating the client from the given URI.
+			restClient = RestClient.builder().baseUrl(baseUri.toString().replaceAll("/$", ""))
+					.requestFactory(requestFactory).build();
+			
 			mapper = new ObjectMapper().registerModule(new JavaTimeModule())
 					.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+			
 			this.tokenProvider = tokenProvider;
 		} catch (RuntimeException e) {
 			throw new TrustDeckClientLibraryException("Invalid TrustDeck client configuration.", e);
@@ -217,22 +251,22 @@ public final class TrustDeckHttpClient {
 			}
 
 			// Execute the request, validate the response status, and deserialize the response body into the expected type
-			log.trace("Executing TrustDeck {} request (authenticated: {}, body present: {}).", method, authenticated,
-					body != null);
+			log.trace("Executing TrustDeck {} request (authenticated: {}, body present: {}).", method, authenticated, body != null);
 			return request.exchange((requestHeaders, response) -> {
 				// Extract info from response
 				byte[] bytes = response.getBody().readAllBytes();
 				HttpStatusCode status = response.getStatusCode();
 				String content = response.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE);
 				String location = response.getHeaders().getFirst(HttpHeaders.LOCATION);
-				log.trace("Received TrustDeck response (method: {}, status: {}, body size: {} bytes).", method,
-						status.value(), bytes.length);
+				String retryAfter = response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER);
+				
+				log.trace("Received TrustDeck response (method: " + method + ", status: " + status.value() + ", body size: " + bytes.length + " bytes).");
 
 				// Check if we expected the status code that was returned
 				if (!expected.contains(status.value())) {
 					// No, we didn't
-					log.debug("Unexpected TrustDeck response status: {}. Expected: {}.", status.value(), expected);
-					throw responseException(status, bytes, content, location);
+					log.debug("Unexpected TrustDeck response status: " + status.value() + ". Expected: " + expected + ".");
+					throw responseException(status, bytes, content, location, retryAfter);
 				}
 
 				// Parse returned body into the proper content object
@@ -274,9 +308,10 @@ public final class TrustDeckHttpClient {
 	 * @param body the response body
 	 * @param contentType the response content type
 	 * @param location the response location header
+	 * @param retryAfter the Retry-After response header
 	 * @return the created response exception
 	 */
-	private TrustDeckResponseException responseException(HttpStatusCode status, byte[] body, String contentType, String location) {
+	private TrustDeckResponseException responseException(HttpStatusCode status, byte[] body, String contentType, String location, String retryAfter) {
 		String raw = new String(body, StandardCharsets.UTF_8);
 		if (raw.length() > MAX_ERROR_BODY_LENGTH) {
 			raw = raw.substring(0, MAX_ERROR_BODY_LENGTH);
@@ -289,7 +324,7 @@ public final class TrustDeckHttpClient {
 			// Preserve the raw response when it is not a status-info document
 		}
 
-		return new TrustDeckResponseException("TrustDeck returned HTTP " + status.value() + ".", status, info, raw, contentType, location);
+		return new TrustDeckResponseException("TrustDeck returned HTTP " + status.value() + ".", status, info, raw, contentType, location, retryAfter);
 	}
 
 	/**

@@ -160,26 +160,55 @@ public class TrustDeckClientExample {
 			sleep(sleepTime);
 			System.out.println("\n--- Successfully completed the examples ---");
 		} finally {
-			System.out.println("\nDelete resources in reverse dependency order, continuing if one cleanup request fails.");
-			String createdPseudonym = pseudonymValue;
-			UUID createdEntity = entityId;
-
-			if (pseudonymValue != null) {
-				cleanup("pseudonym", () -> client.pseudonyms(projectDomainName).delete(createdPseudonym));
+			try{
+				System.out.println("\nDelete resources in reverse dependency order.");
+			
+				if (pseudonymValue != null) {
+					if (client.pseudonyms(projectDomainName).delete(pseudonymValue)) {
+						System.out.println(" - Deleted pseudonym.");
+					} else {
+						System.out.println(" - Could not delete pseudonym.");
+					}
+				}
+				
+				if (entityId != null) {
+					if (client.entities(projectAbbreviation, entityTypeName).delete(entityId)) {
+						System.out.println(" - Deleted entity.");
+					} else {
+						System.out.println(" - Could not delete entity.");
+					}
+				}
+				
+				if (client.entityTypes(projectAbbreviation).delete(entityTypeName)) {
+					System.out.println(" - Deleted entity type.");
+				} else {
+					System.out.println(" - Could not delete entity type.");
+				}
+				
+				if (client.domains().delete(projectDomainName, false)) {
+					System.out.println(" - Deleted domain.");
+				} else {
+					System.out.println(" - Could not delete domain.");
+				}
+				
+				// The TrustDeck API currently exposes no delete operation for base entity types
+				
+				if (client.projectImages(projectAbbreviation).delete()) {
+					System.out.println(" - Deleted project image.");
+				} else {
+					System.out.println(" - Could not delete project image.");
+				}
+				
+				if (client.projects().delete(projectAbbreviation)) {
+					System.out.println(" - Deleted project.");
+				} else {
+					System.out.println(" - Could not delete project.");
+				}
+				
+				System.out.println("\nDone with removing resources.");
+			} catch (RuntimeException e) {
+				System.out.println("\nFailed to delete example resources with exception: " + e.getMessage());
 			}
-
-			if (entityId != null) {
-				cleanup("entity", () -> client.entities(projectAbbreviation, entityTypeName).delete(createdEntity));
-			}
-			
-			cleanup("project image", () -> client.projectImages(projectAbbreviation).delete());
-			cleanup("entity type", () -> client.entityTypes(projectAbbreviation).delete(entityTypeName));
-			cleanup("domain", () -> client.domains().delete(projectDomainName, false));
-			
-			// The TrustDeck API currently exposes no delete operation for base entity types
-			cleanup("project", () -> client.projects().delete(projectAbbreviation));
-			
-			System.out.println("\nDone with removing resources.");
 		}
 	}
 
@@ -190,21 +219,6 @@ public class TrustDeckClientExample {
 		String value = System.getProperty(key);
 
 		return value == null ? System.getenv(key) : value;
-	}
-
-	/**
-	 * Attempts a cleanup operation without preventing subsequent cleanup operations.
-	 *
-	 * @param resource resource being deleted
-	 * @param operation cleanup operation
-	 */
-	private static void cleanup(String resource, Runnable operation) {
-		try {
-			operation.run();
-			System.out.println(" - Deleted " + resource + ".");
-		} catch (RuntimeException exception) {
-			System.out.println(" - Could not delete " + resource + ": " + exception.getMessage());
-		}
 	}
 	
 	private static void sleep(int millis) {

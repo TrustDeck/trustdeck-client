@@ -55,17 +55,32 @@ import org.trustdeck.client.model.PseudonymUpdate;
 import org.trustdeck.client.model.RecordLinkageCandidate.RecordLinkageResolutionStrategy;
 
 /**
- * Independently exercises every reviewed backend operation through the public API.
+ * Verifies that the public {@link TrustDeckClient} API maps client operations to
+ * the expected HTTP endpoint contracts.
+ * The tests validate HTTP methods, paths, query parameters, request bodies,
+ * authentication headers, content types, and basic response handling.
  *
  * @author Armin Müller
  */
 class PublicEndpointContractTest {
 	
+	/** Local HTTP server used to capture requests issued by the client under test. */
 	private static HttpServer server;
+	
+	/** TrustDeck client instance configured to communicate with the local test server. */
 	private static TrustDeckClient client;
+	
+	/** Requests captured by the local test server during the current test case. */
 	private static final List<Request> requests = new ArrayList<>();
+	
+	/** Endpoint contract currently being executed by the dynamic test. */
 	private static Case current;
 
+	/**
+	 * Starts the local HTTP server used to capture requests issued by the client.
+	 *
+	 * @throws IOException if the HTTP server cannot be created or started
+	 */
 	@BeforeAll
 	static void start() throws IOException {
 		server = HttpServer.create(new InetSocketAddress(0), 0);
@@ -73,11 +88,20 @@ class PublicEndpointContractTest {
 		server.start();
 		client = new TrustDeckClient("http://localhost:" + server.getAddress().getPort(), () -> "fake-token");
 	}
+
+	/**
+	 * Stops the local HTTP server after all contract tests have completed.
+	 */
 	@AfterAll
 	static void stop() {
 		server.stop(0);
 	}
 
+	/**
+	 * Creates dynamic tests covering all public client endpoint contracts.
+	 *
+	 * @return stream containing one dynamic test for each endpoint contract
+	 */
 	@TestFactory
 	Stream<DynamicTest>
 	endpointContracts() {
@@ -165,10 +189,28 @@ class PublicEndpointContractTest {
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
 	}
 
+	/**
+	 * Creates an endpoint contract test case.
+	 *
+	 * @param name descriptive name of the test case
+	 * @param method expected HTTP method
+	 * @param path expected request path
+	 * @param query expected query parameters
+	 * @param body whether a request body is expected
+	 * @param result whether a non-null result is expected
+	 * @param action client operation exercising the endpoint
+	 * @return configured endpoint contract test case
+	 */
 	private static Case c(String name, String method, String path, Map<String, String> query, boolean body, boolean result, Supplier<?> action) {
 		return new Case(name, method, path, query, body, result, action);
 	}
 	
+	/**
+	 * Executes an endpoint contract test case and verifies the captured request
+	 * against its expected HTTP contract.
+	 *
+	 * @param spec endpoint contract to execute and verify
+	 */
 	private static void run(Case spec) {
 		requests.clear();
 		current = spec;
@@ -200,7 +242,13 @@ class PublicEndpointContractTest {
 			assertNotNull(result);
 		}
 	}
-	
+
+	/**
+	 * Parses a raw URL query string into decoded parameter names and values.
+	 *
+	 * @param raw raw query string, or {@code null} if no query is present
+	 * @return decoded query parameters
+	 */
 	private static Map<String, String> query(String raw) {
 		Map<String, String> result = new LinkedHashMap<>();
 		if (raw == null)
@@ -213,6 +261,13 @@ class PublicEndpointContractTest {
 		return result;
 	}
 
+	/**
+	 * Checks whether a byte sequence occurs within another byte array.
+	 *
+	 * @param actual byte array to search
+	 * @param expected byte sequence to locate
+	 * @return {@code true} if the expected sequence occurs in the actual data, otherwise {@code false}
+	 */
 	private static boolean containsBytes(byte[] actual, byte[] expected) {
 		for (int i = 0; i <= actual.length - expected.length; i++)
 			if (Arrays.equals(expected, Arrays.copyOfRange(actual, i, i + expected.length)))
@@ -220,6 +275,13 @@ class PublicEndpointContractTest {
 		return false;
 	}
 
+	/**
+	 * Captures an incoming request and returns a response appropriate for the
+	 * currently executed endpoint contract.
+	 *
+	 * @param exchange HTTP exchange to process
+	 * @throws IOException if reading the request or writing the response fails
+	 */
 	private static void respond(HttpExchange exchange) throws IOException {
 		byte[] requestBody = exchange.getRequestBody().readAllBytes();
 		requests.add(new Request(exchange.getRequestMethod(), exchange.getRequestURI().getPath(),
@@ -256,7 +318,29 @@ class PublicEndpointContractTest {
 		exchange.close();
 	}
 
+	/**
+	 * Defines the expected HTTP contract and client operation for a dynamic test.
+	 *
+	 * @param name descriptive name of the test
+	 * @param method expected HTTP method
+	 * @param path expected request path
+	 * @param query expected query parameters
+	 * @param body whether a request body is expected
+	 * @param result whether a non-null result is expected
+	 * @param action client operation exercising the endpoint
+	 */
 	private record Case(String name, String method, String path, Map<String, String> query, boolean body, boolean result, Supplier<?> action) { }
 
+	/**
+	 * Represents an HTTP request captured by the local test server.
+	 *
+	 * @param method HTTP method
+	 * @param path request path
+	 * @param query raw query string
+	 * @param authorization authorization header value
+	 * @param accept accept header value
+	 * @param contentType content type header value
+	 * @param body request body
+	 */
 	private record Request(String method, String path, String query, String authorization, String accept, String contentType, byte[] body) { }
 }

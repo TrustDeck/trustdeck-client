@@ -14,10 +14,17 @@
 
 	<groupId>org.trustdeck</groupId>
 	<artifactId>client</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<packaging>jar</packaging>
 	<name>TrustDeck Client Library</name>
-	<description>A client library for interacting with the TrustDeck services.</description>
+	<description>A client library for interacting with the TrustDeck backend services.</description>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
 	<dependencies>
 		<!-- Logging (License: MIT) -->
@@ -35,14 +42,14 @@
 			<scope>runtime</scope>
 		</dependency>
 		
-		<!-- Web utilities (License: Apache 2.0) -->
+		<!-- Web utilities (License: Apache-2.0) -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 			<version>6.2.19</version>
 		</dependency>
 		
-		<!-- Authentication (License: Apache 2.0) -->
+		<!-- Authentication (License: Apache-2.0) -->
 		<dependency>
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-admin-client</artifactId>
@@ -57,7 +64,7 @@
 			<version>1.18.38</version>
 		</dependency>
 		
-		<!-- JSON manipulation for model representation (License: Apache 2.0) -->
+		<!-- JSON manipulation for model representation (License: Apache-2.0) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
@@ -79,7 +86,7 @@
 			<version>${jackson.databind.version}</version>
 		</dependency>
 		
-		<!-- Testing (License: EPL 2.0; compatible with Apache 2.0) -->
+		<!-- Testing (License: EPL-2.0; compatible with Apache-2.0) -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
@@ -87,7 +94,7 @@
 			<scope>test</scope>
 		</dependency>
 		
-		<!-- Testing (License: Apache 2.0) -->
+		<!-- Testing (License: Apache-2.0) -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-test</artifactId>
