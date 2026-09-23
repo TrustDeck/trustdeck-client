@@ -111,7 +111,8 @@ public final class TrustDeckHttpClient {
 					.requestFactory(requestFactory).build();
 			
 			mapper = new ObjectMapper().registerModule(new JavaTimeModule())
-					.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+					.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+					.configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false);
 			
 			this.tokenProvider = tokenProvider;
 		} catch (RuntimeException e) {

@@ -42,7 +42,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.Domain;
 import org.trustdeck.client.model.Entity;
 import org.trustdeck.client.model.EntityType;
@@ -145,7 +144,8 @@ class PublicEndpointContractTest {
 		cases.add(c("ProjectController list", "GET", "/api/projects", Map.of(), false, true, () -> client.projects().getAll()));
 		cases.add(c("ProjectController get", "GET", "/api/projects/project", Map.of(), false, true, () -> client.projects().get("project")));
 		cases.add(c("ProjectController domains", "GET", "/api/projects/project/domains", Map.of(), false, true, () -> projectScope.domains().getAll()));
-		cases.add(c("ProjectController statistics", "GET", "/api/projects/project/statistics", Map.of(), false, false, () -> { try { return projectScope.getStatistics(); } catch (TrustDeckResponseException e) { assertEquals(501, e.getStatusCode()); return null; } }));
+		cases.add(c("ProjectController statistics", "GET", "/api/projects/project/statistics", Map.of(), false, true, () -> projectScope.getStatistics()));
+		cases.add(c("SystemController statistics", "GET", "/api/system/statistics", Map.of(), false, true, () -> client.system().getStatistics()));
 		cases.add(c("ProjectController update", "PUT", "/api/projects/project", Map.of(), true, true, () -> projectScope.update(project)));
 		cases.add(c("ProjectController delete", "DELETE", "/api/projects/project", Map.of(), false, true, () -> projectScope.delete()));
 		cases.add(c("ProjectImageController create", "POST", "/api/projects/project/image", Map.of(), true, true, () -> projectScope.image().create(new ProjectImage(new byte[] {1, 2, 3}, "image/png", "logo.png"))));
@@ -185,7 +185,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().delete("user", permissions)));
 		cases.add(c("PermissionController globalDelete", "DELETE", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().deleteGlobal("user", permissions)));
 		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").delete("user", permissions)));
-		assertEquals(69, cases.size());
+		assertEquals(70, cases.size());
 		
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
 	}
@@ -298,13 +298,16 @@ class PublicEndpointContractTest {
 				exchange.getRequestHeaders().getFirst("Accept"), exchange.getRequestHeaders().getFirst("Content-Type"),
 				requestBody));
 		
-		int status = current.path.endsWith("/statistics") ? 501
-				: current.method.equals("DELETE") ? 204
+		int status = current.method.equals("DELETE") ? 204
 						: current.path.endsWith("record-linkage") ? 200 : current.method.equals("POST") ? 201 : 200;
 		
 		byte[] response = current.path.equals("/api/health")
 				? "{\"status\":\"UP\",\"service\":\"test\",\"timestamp\":\"2026-01-01T00:00:00Z\"}".getBytes(StandardCharsets.UTF_8)
-				: current.path.endsWith("/name") 
+						: current.path.equals("/api/projects/project/statistics")
+								? ("{\"generatedAt\":\"2026-01-01T00:00:00Z\",\"project\":{\"name\":\"Project\",\"abbreviation\":\"project\",\"startDate\":\"2025-01-01T00:00:00+01:00\",\"endDate\":\"2027-01-01T00:00:00+01:00\",\"remainingValiditySeconds\":123},\"counts\":{\"domains\":1,\"entityTypes\":2,\"entities\":3,\"pseudonyms\":4},\"entitiesByType\":[],\"pseudonymsByDomain\":[]}").getBytes(StandardCharsets.UTF_8)
+								: current.path.equals("/api/system/statistics")
+										? ("{\"application\":{\"version\":\"2.3.0\",\"buildCommit\":\"0123456789abcdef0123456789abcdef01234567\"},\"database\":{\"databaseTime\":\"2026-01-01T00:00:00Z\",\"sizeBytes\":100,\"tables\":[]},\"connectionPool\":{\"activeConnections\":1,\"idleConnections\":2,\"totalConnections\":3,\"threadsAwaitingConnection\":4,\"maximumPoolSize\":5,\"minimumIdleConnections\":6},\"jvmMemory\":{\"heapUsedBytes\":7,\"heapCommittedBytes\":8,\"heapMaximumBytes\":9,\"nonHeapUsedBytes\":10,\"nonHeapCommittedBytes\":11}}").getBytes(StandardCharsets.UTF_8)
+								: current.path.endsWith("/name")
 						? "\"name\"".getBytes(StandardCharsets.UTF_8)
 						: current.path.endsWith("/validation") 
 								? "true".getBytes(StandardCharsets.UTF_8)

@@ -98,6 +98,7 @@ class ProjectScopeBehaviorTest {
 	void navigationDoesNotRequestAndScopesRemainIndependent() {
 		ProjectScope first = client.project("first");
 		ProjectScope second = client.project("second");
+		client.system();
 		first.image();
 		first.domains();
 		first.entityTypes();
@@ -116,6 +117,27 @@ class ProjectScopeBehaviorTest {
 		second.get();
 		
 		assertEquals(List.of("/api/projects/other", "/api/projects/first", "/api/projects/second"), paths);
+	}
+
+	/**
+	 * Verifies that both statistics operations make one authenticated request
+	 * only when invoked.
+	 */
+	@Test
+	void statisticsRequestOnlyWhenInvoked() {
+		ProjectScope projectScope = client.project("project");
+		client.system();
+		assertEquals(0, requestCalls.get());
+		assertEquals(0, tokenCalls.get());
+
+		projectScope.getStatistics();
+		assertEquals(1, requestCalls.get());
+		assertEquals(1, tokenCalls.get());
+		
+		client.system().getStatistics();
+		assertEquals(2, requestCalls.get());
+		assertEquals(2, tokenCalls.get());
+		assertEquals(List.of("/api/projects/project/statistics", "/api/system/statistics"), paths);
 	}
 
 	/**

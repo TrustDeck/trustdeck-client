@@ -28,6 +28,7 @@ import org.trustdeck.client.service.BaseEntityTypes;
 import org.trustdeck.client.service.Domains;
 import org.trustdeck.client.service.Permissions;
 import org.trustdeck.client.service.Projects;
+import org.trustdeck.client.service.SystemOperations;
 import org.trustdeck.client.service.TrustDeckTokenService;
 
 /**
@@ -52,6 +53,9 @@ public class TrustDeckClient {
 	/** Service for permission and user operations. */
 	private final Permissions permissions;
 
+	/** Service for global system statistics operations. */
+	private final SystemOperations system;
+
 	/** Keycloak-backed token service. Null when the client uses a caller-supplied {@link AccessTokenProvider}. */
 	private final TrustDeckTokenService tokenService;
 
@@ -69,6 +73,7 @@ public class TrustDeckClient {
 		projects = new Projects(http);
 		baseEntityTypes = new BaseEntityTypes(http);
 		permissions = new Permissions(http);
+		system = new SystemOperations(http);
 	}
 
 	/**
@@ -96,6 +101,7 @@ public class TrustDeckClient {
 		projects = new Projects(http);
 		baseEntityTypes = new BaseEntityTypes(http);
 		permissions = new Permissions(http);
+		system = new SystemOperations(http);
 	}
 
 	/**
@@ -142,6 +148,15 @@ public class TrustDeckClient {
 	 */
 	public Permissions permissions() {
 		return permissions;
+	}
+
+	/**
+	 * Returns global system operations without making an HTTP request.
+	 *
+	 * @return global system operations
+	 */
+	public SystemOperations system() {
+		return system;
 	}
 
 	/**
