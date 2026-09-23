@@ -115,75 +115,76 @@ class PublicEndpointContractTest {
 		List<Permission> permissions = List.of(permission); UUID id = UUID.randomUUID();
 		
 		List<Case> cases = new ArrayList<>();
+		ProjectScope projectScope = client.project("project");
 		cases.add(c("ApiController health", "GET", "/api/health", Map.of(), false, true, () -> client.health()));
-		cases.add(c("DomainController create", "POST", "/api/domains", Map.of(), true, true, () -> client.domains().create(new Domain())));
-		cases.add(c("DomainController createComplete", "POST", "/api/domains/complete", Map.of(), true, true, () -> client.domains().createComplete(new Domain())));
-		cases.add(c("DomainController delete", "DELETE", "/api/domains", Map.of("name", "domain", "recursive", "true"), false, true, () -> client.domains().delete("domain", true)));
-		cases.add(c("DomainController attribute", "GET", "/api/domains/domain/name", Map.of(), false, true, () -> client.domains().getAttribute("domain", "name")));
-		cases.add(c("DomainController get", "GET", "/api/domains/domain", Map.of(), false, true, () -> client.domains().get("domain")));
-		cases.add(c("DomainController subtree", "GET", "/api/domains/domain/subtree", Map.of(), false, true, () -> client.domains().getSubtree("domain")));
+		cases.add(c("DomainController create", "POST", "/api/domains", Map.of(), true, true, () -> projectScope.domains().create(new Domain())));
+		cases.add(c("DomainController createComplete", "POST", "/api/domains/complete", Map.of(), true, true, () -> projectScope.domains().createComplete(new Domain())));
+		cases.add(c("DomainController delete", "DELETE", "/api/domains", Map.of("name", "domain", "recursive", "true"), false, true, () -> projectScope.domains().delete("domain", true)));
+		cases.add(c("DomainController attribute", "GET", "/api/domains/domain/name", Map.of(), false, true, () -> projectScope.domains().getAttribute("domain", "name")));
+		cases.add(c("DomainController get", "GET", "/api/domains/domain", Map.of(), false, true, () -> projectScope.domains().get("domain")));
+		cases.add(c("DomainController subtree", "GET", "/api/domains/domain/subtree", Map.of(), false, true, () -> projectScope.domains().getSubtree("domain")));
 		cases.add(c("DomainController hierarchy", "GET", "/api/domains/hierarchy", Map.of(), false, true, () -> client.domains().getHierarchy()));
-		cases.add(c("DomainController updateComplete", "PUT", "/api/domains/complete", Map.of("name", "domain", "recursive", "true"), true, true, () -> client.domains().updateComplete("domain", new Domain(), true)));
-		cases.add(c("DomainController update", "PUT", "/api/domains", Map.of("name", "domain"), true, true, () -> client.domains().update("domain", new Domain())));
-		cases.add(c("DomainController salt", "PUT", "/api/domains/domain/salt", Map.of("salt", "12345678", "allowEmpty", "false"), false, true, () -> client.domains().updateSalt("domain", "12345678", false)));
+		cases.add(c("DomainController updateComplete", "PUT", "/api/domains/complete", Map.of("name", "domain", "recursive", "true"), true, true, () -> projectScope.domains().updateComplete("domain", new Domain(), true)));
+		cases.add(c("DomainController update", "PUT", "/api/domains", Map.of("name", "domain"), true, true, () -> projectScope.domains().update("domain", new Domain())));
+		cases.add(c("DomainController salt", "PUT", "/api/domains/domain/salt", Map.of("salt", "12345678", "allowEmpty", "false"), false, true, () -> projectScope.domains().updateSalt("domain", "12345678", false)));
 		cases.add(c("DomainController search", "GET", "/api/domains", Map.of("query", "query"), false, true, () -> client.domains().search("query")));
-		cases.add(c("PseudonymController createBatch", "POST", "/api/domains/domain/pseudonyms/batch", Map.of("omitPrefix", "false"), true, true, () -> client.pseudonyms("domain").createBatch(List.of(pseudonym), false)));
-		cases.add(c("PseudonymController create", "POST", "/api/domains/domain/pseudonyms", Map.of("omitPrefix", "false"), true, true, () -> client.pseudonyms("domain").create(pseudonym)));
-		cases.add(c("PseudonymController deleteBatch", "DELETE", "/api/domains/domain/pseudonyms/batch", Map.of(), false, true, () -> client.pseudonyms("domain").deleteBatch()));
-		cases.add(c("PseudonymController deleteIdentifier", "DELETE", "/api/domains/domain/pseudonyms", Map.of("id", "id value", "idType", "type"), false, true, () -> client.pseudonyms("domain").delete(identifier)));
-		cases.add(c("PseudonymController linked", "GET", "/api/domains/linked-pseudonyms", Map.of("sourceDomain", "source", "targetDomain", "target"), false, true, () -> client.pseudonyms("domain").getLinkedPseudonyms("source", "target", null, null, null)));
-		cases.add(c("PseudonymController getBatch", "GET", "/api/domains/domain/pseudonyms/batch", Map.of(), false, true, () -> client.pseudonyms("domain").getBatch()));
-		cases.add(c("PseudonymController getIdentifier", "GET", "/api/domains/domain/pseudonyms", Map.of("id", "id value", "idType", "type"), false, true, () -> client.pseudonyms("domain").get(identifier)));
-		cases.add(c("PseudonymController getPsn", "GET", "/api/domains/domain/pseudonyms", Map.of("psn", "psn"), false, true, () -> client.pseudonyms("domain").get("psn")));
-		cases.add(c("PseudonymController updateBatch", "PUT", "/api/domains/domain/pseudonyms/batch", Map.of(), true, true, () -> client.pseudonyms("domain").updateBatch(List.of(update))));
-		cases.add(c("PseudonymController updateComplete", "PUT", "/api/domains/domain/pseudonyms/complete", Map.of("regeneratePseudonym", "true"), true, true, () -> client.pseudonyms("domain").updateComplete(update, true)));
-		cases.add(c("PseudonymController update", "PUT", "/api/domains/domain/pseudonyms", Map.of(), true, true, () -> client.pseudonyms("domain").update(update)));
-		cases.add(c("PseudonymController validate", "GET", "/api/domains/domain/pseudonyms/validation", Map.of("psn", "psn"), false, true, () -> client.pseudonyms("domain").validate("psn")));
-		cases.add(c("PseudonymController search", "GET", "/api/domains/domain/pseudonyms", Map.of("query", "query"), false, true, () -> client.pseudonyms("domain").search("query")));
+		cases.add(c("PseudonymController createBatch", "POST", "/api/domains/domain/pseudonyms/batch", Map.of("omitPrefix", "false"), true, true, () -> projectScope.pseudonyms("domain").createBatch(List.of(pseudonym), false)));
+		cases.add(c("PseudonymController create", "POST", "/api/domains/domain/pseudonyms", Map.of("omitPrefix", "false"), true, true, () -> projectScope.pseudonyms("domain").create(pseudonym)));
+		cases.add(c("PseudonymController deleteBatch", "DELETE", "/api/domains/domain/pseudonyms/batch", Map.of(), false, true, () -> projectScope.pseudonyms("domain").deleteBatch()));
+		cases.add(c("PseudonymController deleteIdentifier", "DELETE", "/api/domains/domain/pseudonyms", Map.of("id", "id value", "idType", "type"), false, true, () -> projectScope.pseudonyms("domain").delete(identifier)));
+		cases.add(c("PseudonymController linked", "GET", "/api/domains/linked-pseudonyms", Map.of("sourceDomain", "domain", "targetDomain", "target"), false, true, () -> projectScope.pseudonyms("domain").getLinkedPseudonyms("target", null, null, null)));
+		cases.add(c("PseudonymController getBatch", "GET", "/api/domains/domain/pseudonyms/batch", Map.of(), false, true, () -> projectScope.pseudonyms("domain").getBatch()));
+		cases.add(c("PseudonymController getIdentifier", "GET", "/api/domains/domain/pseudonyms", Map.of("id", "id value", "idType", "type"), false, true, () -> projectScope.pseudonyms("domain").get(identifier)));
+		cases.add(c("PseudonymController getPsn", "GET", "/api/domains/domain/pseudonyms", Map.of("psn", "psn"), false, true, () -> projectScope.pseudonyms("domain").get("psn")));
+		cases.add(c("PseudonymController updateBatch", "PUT", "/api/domains/domain/pseudonyms/batch", Map.of(), true, true, () -> projectScope.pseudonyms("domain").updateBatch(List.of(update))));
+		cases.add(c("PseudonymController updateComplete", "PUT", "/api/domains/domain/pseudonyms/complete", Map.of("regeneratePseudonym", "true"), true, true, () -> projectScope.pseudonyms("domain").updateComplete(update, true)));
+		cases.add(c("PseudonymController update", "PUT", "/api/domains/domain/pseudonyms", Map.of(), true, true, () -> projectScope.pseudonyms("domain").update(update)));
+		cases.add(c("PseudonymController validate", "GET", "/api/domains/domain/pseudonyms/validation", Map.of("psn", "psn"), false, true, () -> projectScope.pseudonyms("domain").validate("psn")));
+		cases.add(c("PseudonymController search", "GET", "/api/domains/domain/pseudonyms", Map.of("query", "query"), false, true, () -> projectScope.pseudonyms("domain").search("query")));
 		cases.add(c("ProjectController create", "POST", "/api/projects", Map.of(), true, true, () -> client.projects().create(project)));
 		cases.add(c("ProjectController list", "GET", "/api/projects", Map.of(), false, true, () -> client.projects().getAll()));
 		cases.add(c("ProjectController get", "GET", "/api/projects/project", Map.of(), false, true, () -> client.projects().get("project")));
-		cases.add(c("ProjectController domains", "GET", "/api/projects/project/domains", Map.of(), false, true, () -> client.projects().getDomains("project")));
-		cases.add(c("ProjectController statistics", "GET", "/api/projects/project/statistics", Map.of(), false, false, () -> { try { return client.projects().getStatistics("project"); } catch (TrustDeckResponseException e) { assertEquals(501, e.getStatusCode()); return null; } }));
-		cases.add(c("ProjectController update", "PUT", "/api/projects/project", Map.of(), true, true, () -> client.projects().update("project", project)));
-		cases.add(c("ProjectController delete", "DELETE", "/api/projects/project", Map.of(), false, true, () -> client.projects().delete("project")));
-		cases.add(c("ProjectImageController create", "POST", "/api/projects/project/image", Map.of(), true, true, () -> client.projectImages("project").create(new ProjectImage(new byte[] {1, 2, 3}, "image/png", "logo.png"))));
-		cases.add(c("ProjectImageController get", "GET", "/api/projects/project/image", Map.of(), false, true, () -> client.projectImages("project").get()));
-		cases.add(c("ProjectImageController update", "PUT", "/api/projects/project/image", Map.of(), true, true, () -> client.projectImages("project").update(new ProjectImage(new byte[] {1, 2, 3}, "image/png", "logo.png"))));
-		cases.add(c("ProjectImageController delete", "DELETE", "/api/projects/project/image", Map.of(), false, true, () -> client.projectImages("project").delete()));
+		cases.add(c("ProjectController domains", "GET", "/api/projects/project/domains", Map.of(), false, true, () -> projectScope.domains().getAll()));
+		cases.add(c("ProjectController statistics", "GET", "/api/projects/project/statistics", Map.of(), false, false, () -> { try { return projectScope.getStatistics(); } catch (TrustDeckResponseException e) { assertEquals(501, e.getStatusCode()); return null; } }));
+		cases.add(c("ProjectController update", "PUT", "/api/projects/project", Map.of(), true, true, () -> projectScope.update(project)));
+		cases.add(c("ProjectController delete", "DELETE", "/api/projects/project", Map.of(), false, true, () -> projectScope.delete()));
+		cases.add(c("ProjectImageController create", "POST", "/api/projects/project/image", Map.of(), true, true, () -> projectScope.image().create(new ProjectImage(new byte[] {1, 2, 3}, "image/png", "logo.png"))));
+		cases.add(c("ProjectImageController get", "GET", "/api/projects/project/image", Map.of(), false, true, () -> projectScope.image().get()));
+		cases.add(c("ProjectImageController update", "PUT", "/api/projects/project/image", Map.of(), true, true, () -> projectScope.image().update(new ProjectImage(new byte[] {1, 2, 3}, "image/png", "logo.png"))));
+		cases.add(c("ProjectImageController delete", "DELETE", "/api/projects/project/image", Map.of(), false, true, () -> projectScope.image().delete()));
 		cases.add(c("EntityTypeController baseCreate", "POST", "/api/entities/base-types", Map.of(), true, true, () -> client.baseEntityTypes().create(type)));
 		cases.add(c("EntityTypeController baseGet", "GET", "/api/entities/base-types/type", Map.of(), false, true, () -> client.baseEntityTypes().get("type")));
 		cases.add(c("EntityTypeController baseSearch", "GET", "/api/entities/base-types", Map.of("query", "query"), false, true, () -> client.baseEntityTypes().search("query")));
-		cases.add(c("EntityTypeController create", "POST", "/api/projects/project/entities/config", Map.of(), true, true, () -> client.entityTypes("project").create(type)));
-		cases.add(c("EntityTypeController get", "GET", "/api/projects/project/entities/config/type", Map.of(), false, true, () -> client.entityTypes("project").get("type")));
-		cases.add(c("EntityTypeController update", "PUT", "/api/projects/project/entities/config/type", Map.of(), true, true, () -> client.entityTypes("project").update("type", type)));
-		cases.add(c("EntityTypeController delete", "DELETE", "/api/projects/project/entities/config/type", Map.of(), false, true, () -> client.entityTypes("project").delete("type")));
-		cases.add(c("EntityTypeController search", "GET", "/api/projects/project/entities", Map.of("query", "query"), false, true, () -> client.entityTypes("project").search("query")));
-		cases.add(c("EntityController create", "POST", "/api/projects/project/entities/type", Map.of("recordLinkageResolution", "CREATE_ORIGINAL"), true, true, () -> client.entities("project", "type").create(entity, RecordLinkageResolutionStrategy.CREATE_ORIGINAL)));
-		cases.add(c("EntityController get", "GET", "/api/projects/project/entities/type/" + id, Map.of(), false, true, () -> client.entities("project", "type").get(id)));
-		cases.add(c("EntityController update", "PUT", "/api/projects/project/entities/type/" + id, Map.of(), true, true, () -> client.entities("project", "type").update(id, entity)));
-		cases.add(c("EntityController delete", "DELETE", "/api/projects/project/entities/type/" + id, Map.of(), false, true, () -> client.entities("project", "type").delete(id)));
-		cases.add(c("EntityController search", "GET", "/api/projects/project/entities/type", Map.of("query", "query"), false, true, () -> client.entities("project", "type").search("query")));
-		cases.add(c("EntityController pseudonyms", "GET", "/api/projects/project/entities/type/" + id + "/pseudonyms", Map.of(), false, true, () -> client.entities("project", "type").getPseudonyms(id)));
-		cases.add(c("EntityController recordLinkage", "POST", "/api/projects/project/entities/type/record-linkage", Map.of(), true, true, () -> client.entities("project", "type").findRecordLinkageCandidates(entity)));
+		cases.add(c("EntityTypeController create", "POST", "/api/projects/project/entities/config", Map.of(), true, true, () -> projectScope.entityTypes().create(type)));
+		cases.add(c("EntityTypeController get", "GET", "/api/projects/project/entities/config/type", Map.of(), false, true, () -> projectScope.entityTypes().get("type")));
+		cases.add(c("EntityTypeController update", "PUT", "/api/projects/project/entities/config/type", Map.of(), true, true, () -> projectScope.entityTypes().update("type", type)));
+		cases.add(c("EntityTypeController delete", "DELETE", "/api/projects/project/entities/config/type", Map.of(), false, true, () -> projectScope.entityTypes().delete("type")));
+		cases.add(c("EntityTypeController search", "GET", "/api/projects/project/entities", Map.of("query", "query"), false, true, () -> projectScope.entityTypes().search("query")));
+		cases.add(c("EntityController create", "POST", "/api/projects/project/entities/type", Map.of("recordLinkageResolution", "CREATE_ORIGINAL"), true, true, () -> projectScope.entities("type").create(entity, RecordLinkageResolutionStrategy.CREATE_ORIGINAL)));
+		cases.add(c("EntityController get", "GET", "/api/projects/project/entities/type/" + id, Map.of(), false, true, () -> projectScope.entities("type").get(id)));
+		cases.add(c("EntityController update", "PUT", "/api/projects/project/entities/type/" + id, Map.of(), true, true, () -> projectScope.entities("type").update(id, entity)));
+		cases.add(c("EntityController delete", "DELETE", "/api/projects/project/entities/type/" + id, Map.of(), false, true, () -> projectScope.entities("type").delete(id)));
+		cases.add(c("EntityController search", "GET", "/api/projects/project/entities/type", Map.of("query", "query"), false, true, () -> projectScope.entities("type").search("query")));
+		cases.add(c("EntityController pseudonyms", "GET", "/api/projects/project/entities/type/" + id + "/pseudonyms", Map.of(), false, true, () -> projectScope.entities("type").getPseudonyms(id)));
+		cases.add(c("EntityController recordLinkage", "POST", "/api/projects/project/entities/type/record-linkage", Map.of(), true, true, () -> projectScope.entities("type").findRecordLinkageCandidates(entity)));
 		cases.add(c("PermissionController userSearch", "GET", "/api/permissions/users", Map.of("query", "query"), false, true, () -> client.permissions().searchUsers("query")));
-		cases.add(c("PermissionController domainCreate", "POST", "/api/permissions/domains/domain", Map.of("userId", "user"), true, true, () -> client.permissions().createDomain("domain", "user", permissions)));
-		cases.add(c("PermissionController projectCreate", "POST", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> client.permissions().createProject("project", "user", permissions)));
+		cases.add(c("PermissionController domainCreate", "POST", "/api/permissions/domains/domain", Map.of("userId", "user"), true, true, () -> projectScope.domainPermissions("domain").create("user", permissions)));
+		cases.add(c("PermissionController projectCreate", "POST", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().create("user", permissions)));
 		cases.add(c("PermissionController globalCreate", "POST", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().createGlobal("user", permissions)));
-		cases.add(c("PermissionController typeCreate", "POST", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> client.permissions().createEntityType("project", "type", "user", permissions)));
-		cases.add(c("PermissionController domainGet", "GET", "/api/permissions/domains/domain", Map.of("userId", "user"), false, true, () -> client.permissions().getDomain("domain", "user")));
-		cases.add(c("PermissionController projectGet", "GET", "/api/permissions/projects/project", Map.of("userId", "user"), false, true, () -> client.permissions().getProject("project", "user")));
+		cases.add(c("PermissionController typeCreate", "POST", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").create("user", permissions)));
+		cases.add(c("PermissionController domainGet", "GET", "/api/permissions/domains/domain", Map.of("userId", "user"), false, true, () -> projectScope.domainPermissions("domain").get("user")));
+		cases.add(c("PermissionController projectGet", "GET", "/api/permissions/projects/project", Map.of("userId", "user"), false, true, () -> projectScope.permissions().get("user")));
 		cases.add(c("PermissionController globalGet", "GET", "/api/permissions/global", Map.of("userId", "user"), false, true, () -> client.permissions().getGlobal("user")));
-		cases.add(c("PermissionController typeGet", "GET", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), false, true, () -> client.permissions().getEntityType("project", "type", "user")));
+		cases.add(c("PermissionController typeGet", "GET", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), false, true, () -> projectScope.entityTypePermissions("type").get("user")));
 		cases.add(c("PermissionController available", "GET", "/api/permissions", Map.of(), false, true, () -> client.permissions().getAvailable()));
-		cases.add(c("PermissionController domainUpdate", "PUT", "/api/permissions/domains/domain", Map.of("userId", "user"), true, true, () -> client.permissions().updateDomain("domain", "user", permissions)));
-		cases.add(c("PermissionController projectUpdate", "PUT", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> client.permissions().updateProject("project", "user", permissions)));
+		cases.add(c("PermissionController domainUpdate", "PUT", "/api/permissions/domains/domain", Map.of("userId", "user"), true, true, () -> projectScope.domainPermissions("domain").update("user", permissions)));
+		cases.add(c("PermissionController projectUpdate", "PUT", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().update("user", permissions)));
 		cases.add(c("PermissionController globalUpdate", "PUT", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().updateGlobal("user", permissions)));
-		cases.add(c("PermissionController typeUpdate", "PUT", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> client.permissions().updateEntityType("project", "type", "user", permissions)));
-		cases.add(c("PermissionController domainDelete", "DELETE", "/api/permissions/domains/domain", Map.of("userId", "user"), true, true, () -> client.permissions().deleteDomain("domain", "user", permissions)));
-		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> client.permissions().deleteProject("project", "user", permissions)));
+		cases.add(c("PermissionController typeUpdate", "PUT", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").update("user", permissions)));
+		cases.add(c("PermissionController domainDelete", "DELETE", "/api/permissions/domains/domain", Map.of("userId", "user"), true, true, () -> projectScope.domainPermissions("domain").delete("user", permissions)));
+		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().delete("user", permissions)));
 		cases.add(c("PermissionController globalDelete", "DELETE", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().deleteGlobal("user", permissions)));
-		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> client.permissions().deleteEntityType("project", "type", "user", permissions)));
+		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").delete("user", permissions)));
 		assertEquals(69, cases.size());
 		
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
@@ -251,13 +252,17 @@ class PublicEndpointContractTest {
 	 */
 	private static Map<String, String> query(String raw) {
 		Map<String, String> result = new LinkedHashMap<>();
-		if (raw == null)
+		
+		if (raw == null) {
 			return result;
+		}
+		
 		for (String item : raw.split("&")) {
 			String[] pair = item.split("=", 2);
 			result.put(URLDecoder.decode(pair[0], StandardCharsets.UTF_8),
 					URLDecoder.decode(pair[1], StandardCharsets.UTF_8));
 		}
+		
 		return result;
 	}
 
@@ -269,9 +274,12 @@ class PublicEndpointContractTest {
 	 * @return {@code true} if the expected sequence occurs in the actual data, otherwise {@code false}
 	 */
 	private static boolean containsBytes(byte[] actual, byte[] expected) {
-		for (int i = 0; i <= actual.length - expected.length; i++)
-			if (Arrays.equals(expected, Arrays.copyOfRange(actual, i, i + expected.length)))
+		for (int i = 0; i <= actual.length - expected.length; i++) {
+			if (Arrays.equals(expected, Arrays.copyOfRange(actual, i, i + expected.length))) {
 				return true;
+			}
+		}
+		
 		return false;
 	}
 
@@ -284,6 +292,7 @@ class PublicEndpointContractTest {
 	 */
 	private static void respond(HttpExchange exchange) throws IOException {
 		byte[] requestBody = exchange.getRequestBody().readAllBytes();
+		
 		requests.add(new Request(exchange.getRequestMethod(), exchange.getRequestURI().getPath(),
 				exchange.getRequestURI().getRawQuery(), exchange.getRequestHeaders().getFirst("Authorization"),
 				exchange.getRequestHeaders().getFirst("Accept"), exchange.getRequestHeaders().getFirst("Content-Type"),

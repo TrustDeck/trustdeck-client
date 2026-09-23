@@ -36,6 +36,7 @@ import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.Domain;
 import org.trustdeck.client.model.Entity;
 import org.trustdeck.client.model.ProjectImage;
+import org.trustdeck.client.model.ProjectDomain;
 import org.trustdeck.client.model.SearchResult;
 
 /**
@@ -75,18 +76,32 @@ class ResponseContractTest {
 	 */
 	@Test
 	void handlesPartialEmptyAndBinaryResponses() {
-		assertEquals("created", client.domains().create(new Domain()).getName());
+		ProjectScope projectScope = client.project("project");
+		assertEquals("created", projectScope.domains().create(new Domain()).getName());
 		
 		SearchResult<Domain> search = client.domains().search("partial");
 		assertTrue(search.partial());
 		assertTrue(search.items().isEmpty());
 		
 		assertTrue(client.domains().getHierarchy().isEmpty());
-		assertTrue(client.pseudonyms("domain").validate("value"));
+		assertTrue(projectScope.pseudonyms("domain").validate("value"));
 		
-		ProjectImage image = client.projectImages("project").get();
+		ProjectImage image = projectScope.image().get();
 		assertEquals("image/png", image.getMimeType());
 		assertArrayEquals(new byte[] { 1, 2, 3 }, image.getData());
+	}
+
+	/**
+	 * Verifies project-domain summary binding and the unfiltered search alias.
+	 */
+	@Test
+	void bindsProjectDomainSummariesAndSharesGlobalSearch() {
+		ProjectScope projectScope = client.project("project");
+		ProjectDomain summary = projectScope.domains().getAll().get(0);
+		
+		assertEquals("summary", summary.getName());
+		assertTrue(projectScope.domains().search("query").partial());
+		assertTrue(client.domains().search("query").partial());
 	}
 
 	/**
@@ -96,7 +111,7 @@ class ResponseContractTest {
 	@Test
 	void convertsEntityConflictCandidates() {
 		RecordLinkageConflictException exception = assertThrows(RecordLinkageConflictException.class,
-				() -> client.entities("project", "type").create(new Entity()));
+			() -> client.project("project").entities("type").create(new Entity()));
 		
 		assertEquals(409, exception.getStatusCode());
 		assertFalse(exception.getCandidates().isEmpty());
@@ -109,7 +124,7 @@ class ResponseContractTest {
 	@Test
 	void preservesRetryAfterResponseHeader() {
 		TrustDeckResponseException exception = assertThrows(TrustDeckResponseException.class,
-				() -> client.domains().get("retry-after"));
+			() -> client.project("project").domains().get("retry-after"));
 
 		assertEquals("7", exception.getRetryAfter());
 	}
@@ -128,6 +143,8 @@ class ResponseContractTest {
 		
 		if (path.equals("/api/domains") && exchange.getRequestMethod().equals("POST")) {
 			body = "{\"name\":\"created\"}".getBytes();
+		} else if (path.equals("/api/projects/project/domains")) {
+			body = "[{\"name\":\"summary\",\"prefix\":\"S\",\"projectAbbreviation\":\"project\"}]".getBytes();
 		} else if (path.equals("/api/domains")) {
 			status = 206;
 			body = "[]".getBytes();

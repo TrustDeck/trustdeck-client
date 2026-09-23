@@ -32,18 +32,18 @@ import org.trustdeck.client.model.SearchResult;
 import org.trustdeck.client.model.User;
 
 /**
- * Permission and user-management operations.
- *
+ * Provides global permission operations and creates resource-scoped permission services.
+ * 
  * @author Armin Müller
  */
 public class Permissions {
 
-	/** Shared HTTP transport object. */
+	/** Shared HTTP client used for permission requests. */
 	private final TrustDeckHttpClient http;
 
 	/**
-	 * Creates the permission service.
-	 *
+	 * Creates the global permission service.
+	 * 
 	 * @param http shared HTTP transport
 	 */
 	public Permissions(TrustDeckHttpClient http) {
@@ -59,102 +59,52 @@ public class Permissions {
 	public SearchResult<User> searchUsers(String query) {
 		Response<List<User>> response = http.exchange(HttpMethod.GET,
 				http.uri(path("users"), Map.of("query", TrustDeckHttpClient.require(query, "query"))), 
-				null, new ParameterizedTypeReference<List<User>>() { }, Set.of(200, 206), true);
-
-		// HTTP 206 indicates that the backend could only return a partial result.
+				null, new ParameterizedTypeReference<List<User>>() {}, Set.of(200, 206), true);
+		
 		return new SearchResult<>(response.getBody(), response.getStatus() == 206);
-	}
-
-	/**
-	 * Creates domain permissions.
-	 * 
-	 * @param domainName domain name
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return batch result
-	 */
-	public BatchResult<Permission> createDomain(String domainName, String user, List<Permission> permissions) {
-		return create(path("domains", domainName), user, permissions);
-	}
-
-	/**
-	 * Creates project permissions.
-	 * 
-	 * @param projectAbbreviation project abbreviation
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return batch result
-	 */
-	public BatchResult<Permission> createProject(String projectAbbreviation, String user, List<Permission> permissions) {
-		return create(path("projects", projectAbbreviation), user, permissions);
 	}
 
 	/**
 	 * Creates global permissions.
 	 * 
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return batch result
+	 * @param userId subject identifier
+	 * @param permissions permissions to create
+	 * @return created permissions
 	 */
-	public BatchResult<Permission> createGlobal(String user, List<Permission> permissions) {
-		return create(path("global"), user, permissions);
-	}
-
-	/**
-	 * Creates entity-type permissions.
-	 * 
-	 * @param projectAbbreviation project abbreviation
-	 * @param typeName entity type name
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return batch result
-	 */
-	public BatchResult<Permission> createEntityType(String projectAbbreviation, String typeName, String user, List<Permission> permissions) {
-		return create(path("projects", projectAbbreviation, "entity-types", typeName), user, permissions);
-	}
-
-	/**
-	 * Gets domain permissions.
-	 * 
-	 * @param domainName domain name
-	 * @param user subject identifier
-	 * @return permissions
-	 */
-	public List<Permission> getDomain(String domainName, String user) {
-		return get(path("domains", domainName), user);
-	}
-
-	/**
-	 * Gets project permissions.
-	 * 
-	 * @param projectAbbreviation project abbreviation
-	 * @param user subject identifier
-	 * @return permissions
-	 */
-	public List<Permission> getProject(String projectAbbreviation, String user) {
-		return get(path("projects", projectAbbreviation), user);
+	public BatchResult<Permission> createGlobal(String userId, List<Permission> permissions) {
+		return create(path("global"), userId, permissions);
 	}
 
 	/**
 	 * Gets global permissions.
 	 * 
-	 * @param user subject identifier
+	 * @param userId subject identifier
 	 * @return permissions
 	 */
-	public List<Permission> getGlobal(String user) {
-		return get(path("global"), user);
+	public List<Permission> getGlobal(String userId) {
+		return get(path("global"), userId);
 	}
 
 	/**
-	 * Gets entity-type permissions.
+	 * Updates global permissions.
 	 * 
-	 * @param projectAbbreviation project abbreviation
-	 * @param typeName entity type name
-	 * @param user subject identifier
-	 * @return permissions
+	 * @param userId subject identifier
+	 * @param permissions replacement permissions
+	 * @return {@code true} when accepted
 	 */
-	public List<Permission> getEntityType(String projectAbbreviation, String typeName, String user) {
-		return get(path("projects", projectAbbreviation, "entity-types", typeName), user);
+	public boolean updateGlobal(String userId, List<Permission> permissions) {
+		return update(path("global"), userId, permissions);
+	}
+
+	/**
+	 * Deletes global permissions.
+	 * 
+	 * @param userId subject identifier
+	 * @param permissions permissions to delete
+	 * @return deletion results
+	 */
+	public BatchResult<Boolean> deleteGlobal(String userId, List<Permission> permissions) {
+		return delete(path("global"), userId, permissions);
 	}
 
 	/**
@@ -168,188 +118,143 @@ public class Permissions {
 	}
 
 	/**
-	 * Updates domain permissions.
-	 * 
-	 * @param domainName domain name
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return {@code true} after HTTP 200
-	 */
-	public boolean updateDomain(String domainName, String user, List<Permission> permissions) {
-		return update(path("domains", domainName), user, permissions);
-	}
-
-	/**
-	 * Updates project permissions.
-	 * 
-	 * @param projectAbbreviation project abbreviation
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return {@code true} after HTTP 200
-	 */
-	public boolean updateProject(String projectAbbreviation, String user, List<Permission> permissions) {
-		return update(path("projects", projectAbbreviation), user, permissions);
-	}
-
-	/**
-	 * Updates global permissions.
-	 * 
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return {@code true} after HTTP 200
-	 */
-	public boolean updateGlobal(String user, List<Permission> permissions) {
-		return update(path("global"), user, permissions);
-	}
-
-	/**
-	 * Updates entity-type permissions.
-	 * 
-	 * @param projectAbbreviation project abbreviation
-	 * @param typeName entity type name
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return {@code true} after HTTP 200
-	 */
-	public boolean updateEntityType(String projectAbbreviation, String typeName, String user, List<Permission> permissions) {
-		return update(path("projects", projectAbbreviation, "entity-types", typeName), user, permissions);
-	}
-
-	/**
-	 * Deletes domainName permissions and preserves batch status.
-	 * 
-	 * @param domainName domain name
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return batch result
-	 */
-	public BatchResult<Boolean> deleteDomain(String domainName, String user, List<Permission> permissions) {
-		return delete(path("domains", domainName), user, permissions);
-	}
-
-	/**
-	 * Deletes project permissions.
-	 * 
-	 * @param projectAbbreviation project abbreviation
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return batch result
-	 */
-	public BatchResult<Boolean> deleteProject(String projectAbbreviation, String user, List<Permission> permissions) {
-		return delete(path("projects", projectAbbreviation), user, permissions);
-	}
-
-	/**
-	 * Deletes global permissions.
-	 * 
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return batch result
-	 */
-	public BatchResult<Boolean> deleteGlobal(String user, List<Permission> permissions) {
-		return delete(path("global"), user, permissions);
-	}
-
-	/**
-	 * Deletes entity-type permissions.
-	 * 
-	 * @param projectAbbreviation project abbreviation
-	 * @param typeName entity type name
-	 * @param user subject identifier
-	 * @param permissions the list of permissions/actions to be granted
-	 * @return batch result
-	 */
-	public BatchResult<Boolean> deleteEntityType(String projectAbbreviation, String typeName, String user, List<Permission> permissions) {
-		return delete(path("projects", projectAbbreviation, "entity-types", typeName), user, permissions);
-	}
-
-	/**
-	 * Creates permissions for a user within the specified scope.
+	 * Creates permissions for a selected resource scope.
+	 * This method has package-private visibility and is intended for use by the
+	 * resource-scoped permission services.
 	 *
-	 * @param path path segments identifying the permission scope
-	 * @param user ID of the user receiving the permissions
+	 * @param scope endpoint path identifying the resource scope
+	 * @param userId ID of the user receiving the permissions
 	 * @param permissions permissions to create
-	 * @return the created permissions together with the HTTP status and an indicator
-	 *         of whether the operation was only partially successful
+	 * @return result containing the created permissions and response status
 	 */
-	private BatchResult<Permission> create(String[] path, String user, List<Permission> permissions) {
-		Response<List<Permission>> response = http.exchange(HttpMethod.POST, http.uri(path, user(user)), permissions,
+	BatchResult<Permission> createScoped(String[] scope, String userId, List<Permission> permissions) {
+		return create(scope, userId, permissions);
+	}
+
+	/**
+	 * Retrieves permissions for a user within a selected resource scope.
+	 * This method has package-private visibility and is intended for use by the
+	 * resource-scoped permission services.
+	 *
+	 * @param scope endpoint path identifying the resource scope
+	 * @param userId ID of the user whose permissions are retrieved
+	 * @return permissions assigned to the user within the selected scope
+	 */
+	List<Permission> getScoped(String[] scope, String userId) {
+		return get(scope, userId);
+	}
+
+	/**
+	 * Updates permissions for a user within a selected resource scope.
+	 * This method has package-private visibility and is intended for use by the
+	 * resource-scoped permission services.
+	 *
+	 * @param scope endpoint path identifying the resource scope
+	 * @param userId ID of the user whose permissions are updated
+	 * @param permissions replacement permissions
+	 * @return {@code true} when TrustDeck accepts the update
+	 */
+	boolean updateScoped(String[] scope, String userId, List<Permission> permissions) {
+		return update(scope, userId, permissions);
+	}
+
+	/**
+	 * Deletes permissions for a user within a selected resource scope.
+	 * This method has package-private visibility and is intended for use by the
+	 * resource-scoped permission services.
+	 *
+	 * @param scope endpoint path identifying the resource scope
+	 * @param userId ID of the user whose permissions are deleted
+	 * @param permissions permissions to delete
+	 * @return result containing the deletion outcomes and response status
+	 */
+	BatchResult<Boolean> deleteScoped(String[] scope, String userId, List<Permission> permissions) {
+		return delete(scope, userId, permissions);
+	}
+
+	/**
+	 * Sends a permission-creation request for the specified resource scope.
+	 *
+	 * @param scope endpoint path identifying the resource scope
+	 * @param userId ID of the user receiving the permissions
+	 * @param permissions permissions to create
+	 * @return result containing the created permissions and response status
+	 */
+	private BatchResult<Permission> create(String[] scope, String userId, List<Permission> permissions) {
+		Response<List<Permission>> response = http.exchange(HttpMethod.POST, http.uri(scope, user(userId)), permissions,
 				new ParameterizedTypeReference<List<Permission>>() {}, Set.of(200, 201, 206), true);
 		
 		return new BatchResult<>(response.getBody(), response.getStatus(), response.getStatus() == 206);
 	}
 
 	/**
-	 * Retrieves the permissions assigned to a user within the specified scope.
+	 * Sends a permission-retrieval request for the specified resource scope.
 	 *
-	 * @param path path segments identifying the permission scope
-	 * @param user ID of the user whose permissions should be retrieved
-	 * @return the permissions assigned to the user
+	 * @param scope  endpoint path identifying the resource scope
+	 * @param userId ID of the user whose permissions are retrieved
+	 * @return permissions assigned to the user within the selected scope
 	 */
-	private List<Permission> get(String[] path, String user) {
-		return http.exchange(HttpMethod.GET, http.uri(path, user(user)), null,
+	private List<Permission> get(String[] scope, String userId) {
+		return http.exchange(HttpMethod.GET, http.uri(scope, user(userId)), null,
 				new ParameterizedTypeReference<List<Permission>>() {}, Set.of(200), true).getBody();
 	}
 
 	/**
-	 * Updates the permissions assigned to a user within the specified scope.
+	 * Sends a permission-update request for the specified resource scope.
 	 *
-	 * @param path path segments identifying the permission scope
-	 * @param user ID of the user whose permissions should be updated
-	 * @param permissions replacement permissions to assign
-	 * @return {@code true} if the request completes successfully
+	 * @param scope endpoint path identifying the resource scope
+	 * @param userId ID of the user whose permissions are updated
+	 * @param permissions replacement permissions
+	 * @return {@code true} when TrustDeck accepts the update
 	 */
-	private boolean update(String[] path, String user, List<Permission> permissions) {
-		http.empty(HttpMethod.PUT, http.uri(path, user(user)), permissions, Set.of(200), true);
+	private boolean update(String[] scope, String userId, List<Permission> permissions) {
+		http.empty(HttpMethod.PUT, http.uri(scope, user(userId)), permissions, Set.of(200), true);
 		
 		return true;
 	}
 
 	/**
-	 * Deletes permissions from a user within the specified scope.
+	 * Sends a permission-deletion request for the specified resource scope.
 	 *
-	 * @param path path segments identifying the permission scope
-	 * @param user ID of the user whose permissions should be deleted
+	 * @param scope endpoint path identifying the resource scope
+	 * @param userId ID of the user whose permissions are deleted
 	 * @param permissions permissions to delete
-	 * @return the deletion results together with the HTTP status and an indicator
-	 *         of whether the operation was only partially successful
+	 * @return result containing the deletion outcomes and response status
 	 */
-	private BatchResult<Boolean> delete(String[] path, String user, List<Permission> permissions) {
-		Response<List<Boolean>> response = http.exchange(HttpMethod.DELETE, http.uri(path, user(user)), permissions,
+	private BatchResult<Boolean> delete(String[] scope, String userId, List<Permission> permissions) {
+		Response<List<Boolean>> response = http.exchange(HttpMethod.DELETE, http.uri(scope, user(userId)), permissions,
 				new ParameterizedTypeReference<List<Boolean>>() {}, Set.of(204, 206), true);
-
-		// A 204 response has no body, so expose it as an empty batch result
-		List<Boolean> results = response.getBody() == null ? List.<Boolean>of() : response.getBody();
-		return new BatchResult<>(results, response.getStatus(), response.getStatus() == 206);
+		
+		return new BatchResult<>(response.getBody() == null ? List.of() : response.getBody(), response.getStatus(),
+				response.getStatus() == 206);
 	}
 
 	/**
-	 * Creates the query parameters identifying a user.
+	 * Builds the user query parameter for a permission request.
 	 *
-	 * @param userId user ID to validate and include
+	 * @param userId ID of the affected user
 	 * @return query parameters containing the validated user ID
-	 * @throws IllegalArgumentException if the user ID is {@code null} or blank
 	 */
 	private static Map<String, Object> user(String userId) {
 		return Map.of("userId", TrustDeckHttpClient.require(userId, "userId"));
 	}
-
+	
 	/**
-	 * Builds a permission endpoint path from the supplied suffix segments.
+	 * Builds a permission endpoint path and validates each appended segment.
 	 *
-	 * @param suffix path segments to append to the permission API base path
+	 * @param suffix additional permission path segments
 	 * @return the complete permission endpoint path segments
-	 * @throws IllegalArgumentException if a suffix segment is {@code null} or blank
+	 * @throws IllegalArgumentException if a supplied path segment is {@code null} or blank
 	 */
 	private static String[] path(String... suffix) {
 		String[] path = new String[2 + suffix.length];
 		path[0] = "api";
 		path[1] = "permissions";
-		
+
 		for (int i = 0; i < suffix.length; i++) {
 			path[i + 2] = TrustDeckHttpClient.require(suffix[i], "path value");
 		}
-		
+
 		return path;
 	}
 }

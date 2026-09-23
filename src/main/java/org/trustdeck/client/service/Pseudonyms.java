@@ -140,19 +140,23 @@ public class Pseudonyms {
 	}
 
 	/**
-	 * Retrieves linked pseudonyms.
-	 * 
-	 * @param sourceDomain the domain of the source pseudonym
-	 * @param targetDomain the domain of the target pseudonym
+	 * Retrieves linked pseudonyms. The source domain is selected by
+	 * {@code project(abbreviation).pseudonyms(sourceDomain)}
+	 * and is therefore intentionally absent from this method's parameters. Optional
+	 * selectors identify the source pseudonym; target domain and selector order are
+	 * passed to the backend unchanged. Backend permissions and domain-tree rules
+	 * remain authoritative, including for cross-project destinations.
+	 *
+	 * @param targetDomain target domain name
 	 * @param identifier optional source identifier
 	 * @param idType optional source identifier type
-	 * @param psn optional source pseudonym
-	 * @return linked pseudonym pairs
+	 * @param psn optional source pseudonym value
+	 * @return linked pseudonym pairs in source/target order
 	 */
-	public List<Pair<Pseudonym, Pseudonym>> getLinkedPseudonyms(String sourceDomain, String targetDomain, String identifier, String idType, String psn) {
+	public List<Pair<Pseudonym, Pseudonym>> getLinkedPseudonyms(String targetDomain, String identifier, String idType, String psn) {
 		Response<List<Pair<Pseudonym, Pseudonym>>> response = http.exchange(HttpMethod.GET, 
 				http.uri(new String[] {"api", "domains", "linked-pseudonyms"},
-				query(sourceDomain, targetDomain, identifier, idType, psn)), null,
+				query(domainName, targetDomain, identifier, idType, psn)), null,
 				new ParameterizedTypeReference<List<Pair<Pseudonym, Pseudonym>>>() {}, Set.of(200), true);
 
 		return response.getBody();
@@ -268,8 +272,7 @@ public class Pseudonyms {
 	 */
 	public boolean validate(String psn) {
 		return http.exchange(HttpMethod.GET, http.uri(path("validation"), 
-				Map.of("psn", TrustDeckHttpClient.require(psn, "psn"))),
-				null, Boolean.class, Set.of(200), true).getBody();
+				Map.of("psn", TrustDeckHttpClient.require(psn, "psn"))), null, Boolean.class, Set.of(200), true).getBody();
 	}
 
 	/**
@@ -298,6 +301,7 @@ public class Pseudonyms {
 		path[1] = "domains";
 		path[2] = domainName;
 		path[3] = "pseudonyms";
+		
 		System.arraycopy(suffix, 0, path, 4, suffix.length);
 
 		return path;
