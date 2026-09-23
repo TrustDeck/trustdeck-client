@@ -17,14 +17,26 @@
 	<version>2.0.0</version>
 	<packaging>jar</packaging>
 	<name>TrustDeck Client Library</name>
-	<description>A client library for interacting with the TrustDeck backend services.</description>
+	<description>Java client library for the TrustDeck API.</description>
+	<url>https://github.com/TrustDeck/trustdeck-client</url>
 	<licenses>
 		<license>
-			<name>Apache License, Version 2.0</name>
+			<name>Apache License 2.0</name>
 			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+	<developers>
+		<developer>
+			<name>Armin Müller</name>
+			<email>armin.mueller@bih-charite.de</email>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:https://github.com/TrustDeck/trustdeck-client.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/TrustDeck/trustdeck-client.git</developerConnection>
+		<url>https://github.com/TrustDeck/trustdeck-client</url>
+	</scm>
 
 	<dependencies>
 		<!-- Logging (License: MIT) -->
@@ -103,15 +115,6 @@
 		</dependency>
 	</dependencies>
 
-	<distributionManagement>
-		<!-- Uploads artifacts to GitHub -->
-		<repository>
-			<id>github</id>
-			<name>GitHub Packages</name>
-			<url>https://maven.pkg.github.com/TrustDeck/trustdeck-client</url>
-		</repository>
-	</distributionManagement>
-
 	<build>
 		<plugins>
 			<!-- Executes the main class -->
@@ -141,19 +144,35 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+			
+			<!-- Attaches the project source code as a separate sources JAR. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.3.1</version>
-				<executions><execution><id>attach-sources</id><goals><goal>jar-no-fork</goal></goals></execution></executions>
+				<version>3.4.0</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals><goal>jar-no-fork</goal></goals>
+					</execution>
+				</executions>
 			</plugin>
+			
+			<!-- Generates and attaches a Javadoc JAR, failing the build on Javadoc warnings. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.12.0</version>
 				<configuration><failOnWarnings>true</failOnWarnings></configuration>
-				<executions><execution><id>attach-javadocs</id><goals><goal>jar</goal></goals></execution></executions>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals><goal>jar</goal></goals>
+					</execution>
+				</executions>
 			</plugin>
+			
+			<!-- Runs the project's unit tests during the Maven test phase. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -161,4 +180,47 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>central-release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>3.2.8</version>
+						<executions>
+							<execution>
+								<id>sign-release</id>
+								<phase>verify</phase>
+								<goals><goal>sign</goal></goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.11.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>false</autoPublish>
+							<waitUntil>validated</waitUntil>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>github-packages</id>
+			<distributionManagement>
+				<repository>
+					<id>github</id>
+					<name>GitHub Packages</name>
+					<url>https://maven.pkg.github.com/TrustDeck/trustdeck-client</url>
+				</repository>
+			</distributionManagement>
+		</profile>
+	</profiles>
 </project>
