@@ -55,6 +55,9 @@ The active Maven dependency is:
 </dependency>
 ```
 
+Released versions are obtained from Maven Central and do not require
+repository-specific credentials.
+
 Client 2.0.0 supports the typed statistics responses introduced and completed
 in backend v2.3.0. The client and backend use independent version numbers.
 
