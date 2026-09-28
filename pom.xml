@@ -7,7 +7,7 @@
 		<java.version>21</java.version>
 		<jackson.core.version>2.21.4</jackson.core.version>
 		<jackson.annotations.version>2.21</jackson.annotations.version>
-		<jackson.databind.version>2.21.5</jackson.databind.version>
+		<jackson.databind.version>2.21.6</jackson.databind.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
