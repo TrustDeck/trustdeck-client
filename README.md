@@ -32,6 +32,8 @@ The example also accepts these values as Java system properties. System properti
 
 The configured Keycloak client must allow Direct Access Grants and have a client secret. The configured user must have the TrustDeck permissions required by the operations being performed.
 
+Since backend v2.4.0, TrustDeck only accepts access tokens whose `aud` claim contains `trustdeck`. Add an audience mapper to the configured Keycloak client: in the admin console, open **Clients → your client → Client scopes → your-client-dedicated**, choose **Configure a new mapper → Audience**, set **Included Client Audience** to `trustdeck`, and enable **Add to access token**. Without it, every request fails with `401 Unauthorized`. The same applies to tokens supplied through an `AccessTokenProvider`.
+
 ```java
 TrustDeckClientConfig config = TrustDeckClientConfig.builder()
 	.serviceUrl(System.getenv("TRUSTDECK_SERVICE_URL"))
@@ -150,6 +152,22 @@ on a copied payload. Blank or conflicting values are rejected locally;
 case-insensitive matching preserves the caller's supplied value. The copy does
 not mutate the caller or nested algorithm data. This context does not prove or
 enforce domain ownership; backend authorization remains authoritative.
+
+## Permissions
+
+`client.permissions().getOwn()` returns the authenticated user's effective permissions. `getAvailable()` returns the catalogue of actions that can be granted, and `getAvailable("PROJECT")` limits it to one resource type (`PROJECT`, `DOMAIN`, `ENTITY_TYPE`, or `GLOBAL`).
+
+Permission updates synchronize a user's permissions for one resource with the given list and return the added and removed actions as a `PermissionReplacement`. Actions the requester may not grant themselves stay unchanged on the user. If the update adds such an action, the backend changes nothing and the client throws a `PermissionsRejectedException`, whose `getReplacement().getRejected()` lists the rejected actions. TrustDeck only accepts the decision `ALLOW`.
+
+```java
+try {
+	PermissionReplacement result = trustdeck.project("research").permissions().update(userId, permissions);
+} catch (PermissionsRejectedException e) {
+	List<String> rejected = e.getReplacement().getRejected();
+}
+```
+
+`client.projects().getAll()` lists the projects the user may read. `getAll(true)` lists all projects and requires the global `project:list-all` permission.
 
 ## Custom Access Tokens
 
