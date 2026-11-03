@@ -53,7 +53,7 @@ The active Maven dependency is:
 <dependency>
     <groupId>org.trustdeck</groupId>
     <artifactId>client</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
@@ -61,7 +61,9 @@ Released versions are obtained from Maven Central and do not require
 repository-specific credentials.
 
 Client 2.0.0 supports the typed statistics responses introduced and completed
-in backend v2.3.0. The client and backend use independent version numbers.
+in backend v2.3.0. Client 2.1.0 adds the permission and project changes of
+backend v2.4.0 (see [Permissions](#permissions)). The client and backend use
+independent version numbers.
 
 ```java
 ProjectStatistics projectStatistics = trustdeck.project("research").getStatistics();
