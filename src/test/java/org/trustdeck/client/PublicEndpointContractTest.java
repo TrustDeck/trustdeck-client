@@ -142,6 +142,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PseudonymController search", "GET", "/api/domains/domain/pseudonyms", Map.of("query", "query"), false, true, () -> projectScope.pseudonyms("domain").search("query")));
 		cases.add(c("ProjectController create", "POST", "/api/projects", Map.of(), true, true, () -> client.projects().create(project)));
 		cases.add(c("ProjectController list", "GET", "/api/projects", Map.of(), false, true, () -> client.projects().getAll()));
+		cases.add(c("ProjectController listAll", "GET", "/api/projects", Map.of("all", "true"), false, true, () -> client.projects().getAll(true)));
 		cases.add(c("ProjectController get", "GET", "/api/projects/project", Map.of(), false, true, () -> client.projects().get("project")));
 		cases.add(c("ProjectController domains", "GET", "/api/projects/project/domains", Map.of(), false, true, () -> projectScope.domains().getAll()));
 		cases.add(c("ProjectController statistics", "GET", "/api/projects/project/statistics", Map.of(), false, true, () -> projectScope.getStatistics()));
@@ -177,6 +178,8 @@ class PublicEndpointContractTest {
 		cases.add(c("PermissionController globalGet", "GET", "/api/permissions/global", Map.of("userId", "user"), false, true, () -> client.permissions().getGlobal("user")));
 		cases.add(c("PermissionController typeGet", "GET", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), false, true, () -> projectScope.entityTypePermissions("type").get("user")));
 		cases.add(c("PermissionController available", "GET", "/api/permissions", Map.of(), false, true, () -> client.permissions().getAvailable()));
+		cases.add(c("PermissionController availableScoped", "GET", "/api/permissions", Map.of("scope", "PROJECT"), false, true, () -> client.permissions().getAvailable("PROJECT")));
+		cases.add(c("PermissionController own", "GET", "/api/permissions/me", Map.of(), false, true, () -> client.permissions().getOwn()));
 		cases.add(c("PermissionController domainUpdate", "PUT", "/api/permissions/domains/domain", Map.of("userId", "user"), true, true, () -> projectScope.domainPermissions("domain").update("user", permissions)));
 		cases.add(c("PermissionController projectUpdate", "PUT", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().update("user", permissions)));
 		cases.add(c("PermissionController globalUpdate", "PUT", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().updateGlobal("user", permissions)));
@@ -185,7 +188,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().delete("user", permissions)));
 		cases.add(c("PermissionController globalDelete", "DELETE", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().deleteGlobal("user", permissions)));
 		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").delete("user", permissions)));
-		assertEquals(70, cases.size());
+		assertEquals(73, cases.size());
 		
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
 	}

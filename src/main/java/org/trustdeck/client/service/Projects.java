@@ -60,12 +60,24 @@ public class Projects {
 	}
 
 	/**
-	 * Lists all projects.
+	 * Lists the projects the authenticated user may read.
 	 *
 	 * @return projects
 	 */
 	public List<Project> getAll() {
-		return http.exchange(HttpMethod.GET, http.uri(new String[] { "api", "projects" }, Map.of()), null,
+		return getAll(false);
+	}
+
+	/**
+	 * Lists either the projects the authenticated user may read, or all projects.
+	 *
+	 * @param all {@code true} to list all projects, which requires the global {@code project:list-all} permission
+	 * @return projects
+	 */
+	public List<Project> getAll(boolean all) {
+		Map<String, Object> query = all ? Map.of("all", true) : Map.of();
+		
+		return http.exchange(HttpMethod.GET, http.uri(new String[] { "api", "projects" }, query), null,
 				new ParameterizedTypeReference<List<Project>>() { }, Set.of(200), true).getBody();
 	}
 

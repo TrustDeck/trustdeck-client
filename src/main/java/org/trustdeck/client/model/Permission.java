@@ -63,7 +63,7 @@ public class Permission {
 	/** Requested action. */
 	private String action;
 	
-	/** Permission decision. */
+	/** Permission decision; TrustDeck only accepts {@code ALLOW}. */
 	private String decision;
 	
 	/** Permission validity start. */
