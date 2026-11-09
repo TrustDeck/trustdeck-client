@@ -70,6 +70,18 @@ ProjectStatistics projectStatistics = trustdeck.project("research").getStatistic
 SystemStatistics systemStatistics = trustdeck.system().getStatistics();
 ```
 
+By default the statistics avoid scanning large tables, so they can be sampled
+frequently: project statistics leave the entity and pseudonym counts `null`,
+and system statistics report PostgreSQL's live-row estimates
+(`recordCountExact = false`) together with a running insert counter per table
+(`insertedRecordCount`). Request exact counts explicitly when needed; this
+scans the tables and can take long for large projects:
+
+```java
+ProjectStatistics exactProject = trustdeck.project("research").getStatistics(true);
+SystemStatistics exactSystem = trustdeck.system().getStatistics(true);
+```
+
 Project statistics requires `project:statistics` on the selected project.
 System statistics requires the global `system:statistics` permission. These
 permissions are enforced by the backend.

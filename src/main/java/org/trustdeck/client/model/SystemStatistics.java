@@ -115,6 +115,12 @@ public class SystemStatistics {
 
         /** Total relation size in bytes. */
         private long totalRelationSizeBytes;
+
+        /**
+         * Running number of rows inserted since PostgreSQL's statistics were last reset; the
+         * difference between two samples is the insert rate. {@code null} for older backends.
+         */
+        private Long insertedRecordCount;
     }
 
     /** TrustDeck Hikari connection-pool values. */

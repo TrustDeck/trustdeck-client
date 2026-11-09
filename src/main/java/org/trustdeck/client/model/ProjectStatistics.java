@@ -92,11 +92,11 @@ public class ProjectStatistics {
         /** Exact number of project entity types. */
         private long entityTypes;
 
-        /** Exact number of project entities. */
-        private long entities;
+        /** Exact number of project entities; {@code null} unless requested with {@code exact}. */
+        private Long entities;
 
-        /** Exact number of project pseudonyms. */
-        private long pseudonyms;
+        /** Exact number of project pseudonyms; {@code null} unless requested with {@code exact}. */
+        private Long pseudonyms;
     }
 
     /** A named resource and its exact count. */
@@ -110,7 +110,7 @@ public class ProjectStatistics {
         /** Name of the counted resource. */
         private String name;
 
-        /** Exact resource count. */
-        private long count;
+        /** Exact resource count; {@code null} unless requested with {@code exact}. */
+        private Long count;
     }
 }

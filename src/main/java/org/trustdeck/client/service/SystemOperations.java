@@ -49,7 +49,21 @@ public class SystemOperations {
      * @return typed system statistics
      */
     public SystemStatistics getStatistics() {
-        return http.exchange(HttpMethod.GET, http.uri(new String[] { "api", "system", "statistics" }, Map.of()), 
+        return getStatistics(false);
+    }
+
+    /**
+     * Gets global system statistics.
+     *
+     * Without {@code exact}, table row counts are the database's live-row estimates
+     * ({@code recordCountExact = false}); with {@code exact}, every table is counted, which
+     * scans each table completely.
+     *
+     * @param exact whether table rows are counted exactly
+     * @return typed system statistics
+     */
+    public SystemStatistics getStatistics(boolean exact) {
+        return http.exchange(HttpMethod.GET, http.uri(new String[] { "api", "system", "statistics" }, exact ? Map.of("exact", true) : Map.of()),
         		null, SystemStatistics.class, Set.of(200), true).getBody();
     }
 }

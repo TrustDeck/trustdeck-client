@@ -147,6 +147,10 @@ class PublicEndpointContractTest {
 		cases.add(c("ProjectController domains", "GET", "/api/projects/project/domains", Map.of(), false, true, () -> projectScope.domains().getAll()));
 		cases.add(c("ProjectController statistics", "GET", "/api/projects/project/statistics", Map.of(), false, true, () -> projectScope.getStatistics()));
 		cases.add(c("SystemController statistics", "GET", "/api/system/statistics", Map.of(), false, true, () -> client.system().getStatistics()));
+		cases.add(c("ProjectController statistics exact", "GET", "/api/projects/project/statistics", Map.of("exact", "true"), false, true, () -> projectScope.getStatistics(true)));
+		cases.add(c("ProjectController statistics estimated", "GET", "/api/projects/project/statistics", Map.of(), false, true, () -> projectScope.getStatistics(false)));
+		cases.add(c("SystemController statistics exact", "GET", "/api/system/statistics", Map.of("exact", "true"), false, true, () -> client.system().getStatistics(true)));
+		cases.add(c("SystemController statistics estimated", "GET", "/api/system/statistics", Map.of(), false, true, () -> client.system().getStatistics(false)));
 		cases.add(c("ProjectController update", "PUT", "/api/projects/project", Map.of(), true, true, () -> projectScope.update(project)));
 		cases.add(c("ProjectController delete", "DELETE", "/api/projects/project", Map.of(), false, true, () -> projectScope.delete()));
 		cases.add(c("ProjectImageController create", "POST", "/api/projects/project/image", Map.of(), true, true, () -> projectScope.image().create(new ProjectImage(new byte[] {1, 2, 3}, "image/png", "logo.png"))));
@@ -188,7 +192,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().delete("user", permissions)));
 		cases.add(c("PermissionController globalDelete", "DELETE", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().deleteGlobal("user", permissions)));
 		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").delete("user", permissions)));
-		assertEquals(73, cases.size());
+		assertEquals(77, cases.size());
 		
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
 	}

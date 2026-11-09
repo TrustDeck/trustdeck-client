@@ -109,8 +109,22 @@ public class Projects {
 	 * @return typed project statistics
 	 */
 	public ProjectStatistics getStatisticsScoped(String projectAbbreviation) {
-		return http.exchange(HttpMethod.GET, http.uri(path(projectAbbreviation, "statistics"), Map.of()), null,
-				ProjectStatistics.class, Set.of(200), true).getBody();
+		return getStatisticsScoped(projectAbbreviation, false);
+	}
+
+	/**
+	 * Gets project statistics.
+	 *
+	 * Without {@code exact}, entities and pseudonyms are not counted and their counts are
+	 * {@code null}; with {@code exact}, the backend scans the entity and pseudonym tables.
+	 *
+	 * @param projectAbbreviation project abbreviation
+	 * @param exact whether entities and pseudonyms are counted exactly
+	 * @return typed project statistics
+	 */
+	public ProjectStatistics getStatisticsScoped(String projectAbbreviation, boolean exact) {
+		return http.exchange(HttpMethod.GET, http.uri(path(projectAbbreviation, "statistics"), exact ? Map.of("exact", true) : Map.of()),
+				null, ProjectStatistics.class, Set.of(200), true).getBody();
 	}
 
 	/**

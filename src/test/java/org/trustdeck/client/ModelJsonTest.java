@@ -81,6 +81,43 @@ class ModelJsonTest {
 	}
 
 	/**
+	 * Verifies that counts the backend omits without {@code exact} stay {@code null}
+	 * instead of turning into zero.
+	 *
+	 * @throws Exception if JSON deserialization fails
+	 */
+	@Test
+	void keepsOmittedProjectCountsNull() throws Exception {
+		TrustDeckHttpClient client = new TrustDeckHttpClient("https://example.invalid", () -> "token");
+		String json = "{\"counts\":{\"domains\":11,\"entityTypes\":22,\"entities\":null,\"pseudonyms\":null},"
+				+ "\"pseudonymsByDomain\":[{\"name\":\"email\",\"count\":null}]}";
+		ProjectStatistics statistics = client.mapper().readValue(json, ProjectStatistics.class);
+
+		assertEquals(11L, statistics.getCounts().getDomains());
+		assertNull(statistics.getCounts().getEntities());
+		assertNull(statistics.getCounts().getPseudonyms());
+		assertEquals("email", statistics.getPseudonymsByDomain().get(0).getName());
+		assertNull(statistics.getPseudonymsByDomain().get(0).getCount());
+	}
+
+	/**
+	 * Verifies the estimated table count flag and the insert counter of the system statistics.
+	 *
+	 * @throws Exception if JSON deserialization fails
+	 */
+	@Test
+	void parsesEstimatedTableStatistics() throws Exception {
+		TrustDeckHttpClient client = new TrustDeckHttpClient("https://example.invalid", () -> "token");
+		SystemStatistics.TableInfo table = client.mapper().readValue("{\"tableName\":\"pseudonym\",\"recordCount\":125000000,"
+				+ "\"recordCountExact\":false,\"insertedRecordCount\":130000000}", SystemStatistics.TableInfo.class);
+
+		assertEquals(125_000_000L, table.getRecordCount());
+		assertEquals(false, table.isRecordCountExact());
+		assertEquals(130_000_000L, table.getInsertedRecordCount());
+		assertNull(client.mapper().readValue("{\"tableName\":\"old\"}", SystemStatistics.TableInfo.class).getInsertedRecordCount());
+	}
+
+	/**
 	 * Verifies every system statistics field and boolean mapping.
 	 *
 	 * @throws Exception if JSON deserialization fails
