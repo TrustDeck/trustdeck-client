@@ -117,6 +117,7 @@ public class Projects {
 	 *
 	 * Without {@code exact}, entities and pseudonyms are not counted and their counts are
 	 * {@code null}; with {@code exact}, the backend scans the entity and pseudonym tables.
+	 * Requires backend v2.5.0 or newer; older backends ignore {@code exact} and always count exactly.
 	 *
 	 * @param projectAbbreviation project abbreviation
 	 * @param exact whether entities and pseudonyms are counted exactly

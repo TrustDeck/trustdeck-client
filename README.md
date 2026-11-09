@@ -82,6 +82,10 @@ ProjectStatistics exactProject = trustdeck.project("research").getStatistics(tru
 SystemStatistics exactSystem = trustdeck.system().getStatistics(true);
 ```
 
+The estimated variant and `insertedRecordCount` require backend v2.5.0 or
+newer. Older backends ignore the `exact` parameter, always count exactly, and
+leave `insertedRecordCount` empty (`null`).
+
 Project statistics requires `project:statistics` on the selected project.
 System statistics requires the global `system:statistics` permission. These
 permissions are enforced by the backend.

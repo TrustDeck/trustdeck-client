@@ -58,6 +58,7 @@ public class SystemOperations {
      * Without {@code exact}, table row counts are the database's live-row estimates
      * ({@code recordCountExact = false}); with {@code exact}, every table is counted, which
      * scans each table completely.
+     * Requires backend v2.5.0 or newer; older backends ignore {@code exact} and always count exactly.
      *
      * @param exact whether table rows are counted exactly
      * @return typed system statistics
