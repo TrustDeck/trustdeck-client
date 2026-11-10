@@ -60,12 +60,24 @@ public class Projects {
 	}
 
 	/**
-	 * Lists all projects.
+	 * Lists the projects the authenticated user may read.
 	 *
 	 * @return projects
 	 */
 	public List<Project> getAll() {
-		return http.exchange(HttpMethod.GET, http.uri(new String[] { "api", "projects" }, Map.of()), null,
+		return getAll(false);
+	}
+
+	/**
+	 * Lists either the projects the authenticated user may read, or all projects.
+	 *
+	 * @param all {@code true} to list all projects, which requires the global {@code project:list-all} permission
+	 * @return projects
+	 */
+	public List<Project> getAll(boolean all) {
+		Map<String, Object> query = all ? Map.of("all", true) : Map.of();
+		
+		return http.exchange(HttpMethod.GET, http.uri(new String[] { "api", "projects" }, query), null,
 				new ParameterizedTypeReference<List<Project>>() { }, Set.of(200), true).getBody();
 	}
 
@@ -97,8 +109,23 @@ public class Projects {
 	 * @return typed project statistics
 	 */
 	public ProjectStatistics getStatisticsScoped(String projectAbbreviation) {
-		return http.exchange(HttpMethod.GET, http.uri(path(projectAbbreviation, "statistics"), Map.of()), null,
-				ProjectStatistics.class, Set.of(200), true).getBody();
+		return getStatisticsScoped(projectAbbreviation, false);
+	}
+
+	/**
+	 * Gets project statistics.
+	 *
+	 * Without {@code exact}, entities and pseudonyms are not counted and their counts are
+	 * {@code null}; with {@code exact}, the backend scans the entity and pseudonym tables.
+	 * Requires backend v2.5.0 or newer; older backends ignore {@code exact} and always count exactly.
+	 *
+	 * @param projectAbbreviation project abbreviation
+	 * @param exact whether entities and pseudonyms are counted exactly
+	 * @return typed project statistics
+	 */
+	public ProjectStatistics getStatisticsScoped(String projectAbbreviation, boolean exact) {
+		return http.exchange(HttpMethod.GET, http.uri(path(projectAbbreviation, "statistics"), exact ? Map.of("exact", true) : Map.of()),
+				null, ProjectStatistics.class, Set.of(200), true).getBody();
 	}
 
 	/**

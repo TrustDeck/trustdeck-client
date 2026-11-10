@@ -133,6 +133,20 @@ public final class ProjectScope {
 	}
 
 	/**
+	 * Retrieves statistics for the captured project.
+	 *
+	 * Without {@code exact}, entities and pseudonyms are not counted and their counts are
+	 * {@code null}; with {@code exact}, the backend scans the entity and pseudonym tables.
+	 * Requires backend v2.5.0 or newer; older backends ignore {@code exact} and always count exactly.
+	 *
+	 * @param exact whether entities and pseudonyms are counted exactly
+	 * @return typed project statistics
+	 */
+	public ProjectStatistics getStatistics(boolean exact) {
+		return projects.getStatisticsScoped(projectAbbreviation, exact);
+	}
+
+	/**
 	 * Returns project image operations.
 	 * 
 	 * @return project image operations

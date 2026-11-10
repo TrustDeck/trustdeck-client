@@ -18,8 +18,10 @@ package org.trustdeck.client.service;
 
 import java.util.List;
 import org.trustdeck.client.TrustDeckHttpClient;
+import org.trustdeck.client.exception.PermissionsRejectedException;
 import org.trustdeck.client.model.BatchResult;
 import org.trustdeck.client.model.Permission;
+import org.trustdeck.client.model.PermissionReplacement;
 
 /**
  * Provides permission operations scoped to a selected entity type within a
@@ -76,10 +78,11 @@ public final class EntityTypePermissions {
 	 * Updates permissions for a user.
 	 * 
 	 * @param userId subject identifier
-	 * @param values replacement permissions
-	 * @return {@code true} when accepted
+	 * @param values the desired permissions; actions the requester may not grant stay unchanged
+	 * @return the added and removed actions
+	 * @throws PermissionsRejectedException when the update adds actions the requester may not grant; nothing is changed then
 	 */
-	public boolean update(String userId, List<Permission> values) {
+	public PermissionReplacement update(String userId, List<Permission> values) {
 		return permissions.updateScoped(path(), userId, values);
 	}
 

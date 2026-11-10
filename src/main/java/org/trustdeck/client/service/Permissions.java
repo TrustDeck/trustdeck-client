@@ -25,9 +25,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.trustdeck.client.Response;
 import org.trustdeck.client.TrustDeckHttpClient;
+import org.trustdeck.client.exception.PermissionsRejectedException;
+import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.BatchResult;
 import org.trustdeck.client.model.EffectivePermission;
 import org.trustdeck.client.model.Permission;
+import org.trustdeck.client.model.PermissionReplacement;
 import org.trustdeck.client.model.SearchResult;
 import org.trustdeck.client.model.User;
 
@@ -89,10 +92,11 @@ public class Permissions {
 	 * Updates global permissions.
 	 * 
 	 * @param userId subject identifier
-	 * @param permissions replacement permissions
-	 * @return {@code true} when accepted
+	 * @param permissions the desired permissions; actions the requester may not grant stay unchanged
+	 * @return the added and removed actions
+	 * @throws PermissionsRejectedException when the update adds actions the requester may not grant; nothing is changed then
 	 */
-	public boolean updateGlobal(String userId, List<Permission> permissions) {
+	public PermissionReplacement updateGlobal(String userId, List<Permission> permissions) {
 		return update(path("global"), userId, permissions);
 	}
 
@@ -108,12 +112,33 @@ public class Permissions {
 	}
 
 	/**
-	 * Gets permissions available to the current user.
+	 * Gets the catalogue of all actions that can be granted.
 	 * 
-	 * @return available permissions
+	 * @return available actions with their resource types
 	 */
 	public List<EffectivePermission> getAvailable() {
 		return http.exchange(HttpMethod.GET, http.uri(path(), Map.of()), null,
+				new ParameterizedTypeReference<List<EffectivePermission>>() {}, Set.of(200), true).getBody();
+	}
+
+	/**
+	 * Gets the catalogue of the actions that can be granted for one resource type.
+	 * 
+	 * @param scope the resource type ({@code PROJECT}, {@code DOMAIN}, {@code ENTITY_TYPE}, or {@code GLOBAL})
+	 * @return available actions of the resource type
+	 */
+	public List<EffectivePermission> getAvailable(String scope) {
+		return http.exchange(HttpMethod.GET, http.uri(path(), Map.of("scope", TrustDeckHttpClient.require(scope, "scope"))), null,
+				new ParameterizedTypeReference<List<EffectivePermission>>() {}, Set.of(200), true).getBody();
+	}
+
+	/**
+	 * Gets the currently effective permissions of the authenticated user.
+	 * 
+	 * @return the user's effective permissions
+	 */
+	public List<EffectivePermission> getOwn() {
+		return http.exchange(HttpMethod.GET, http.uri(path("me"), Map.of()), null,
 				new ParameterizedTypeReference<List<EffectivePermission>>() {}, Set.of(200), true).getBody();
 	}
 
@@ -151,10 +176,11 @@ public class Permissions {
 	 *
 	 * @param scope endpoint path identifying the resource scope
 	 * @param userId ID of the user whose permissions are updated
-	 * @param permissions replacement permissions
-	 * @return {@code true} when TrustDeck accepts the update
+	 * @param permissions the desired permissions
+	 * @return the added and removed actions
+	 * @throws PermissionsRejectedException when the update adds actions the requester may not grant
 	 */
-	boolean updateScoped(String[] scope, String userId, List<Permission> permissions) {
+	PermissionReplacement updateScoped(String[] scope, String userId, List<Permission> permissions) {
 		return update(scope, userId, permissions);
 	}
 
@@ -204,13 +230,34 @@ public class Permissions {
 	 *
 	 * @param scope endpoint path identifying the resource scope
 	 * @param userId ID of the user whose permissions are updated
-	 * @param permissions replacement permissions
-	 * @return {@code true} when TrustDeck accepts the update
+	 * @param permissions the desired permissions
+	 * @return the added and removed actions
+	 * @throws PermissionsRejectedException when the update adds actions the requester may not grant
 	 */
-	private boolean update(String[] scope, String userId, List<Permission> permissions) {
-		http.empty(HttpMethod.PUT, http.uri(scope, user(userId)), permissions, Set.of(200), true);
-		
-		return true;
+	private PermissionReplacement update(String[] scope, String userId, List<Permission> permissions) {
+		try {
+			return http.exchange(HttpMethod.PUT, http.uri(scope, user(userId)), permissions, PermissionReplacement.class, Set.of(200), true).getBody();
+		} catch (TrustDeckResponseException exception) {
+			// A 403 without rejected actions means the requester may not manage these permissions at all
+			if (exception.getStatusCode() != 403) {
+				throw exception;
+			}
+
+			// A 403 with rejected actions lists what the requester may not grant
+			PermissionReplacement replacement;
+			try {
+				replacement = http.mapper().readValue(exception.getRawBody(), PermissionReplacement.class);
+			} catch (Exception parseFailure) {
+				throw exception;
+			}
+
+			if (replacement == null || replacement.getRejected() == null || replacement.getRejected().isEmpty()) {
+				throw exception;
+			}
+
+			throw new PermissionsRejectedException(exception.getResponseStatusCode(), exception.getStatusInfo(),
+					exception.getRawBody(), exception.getContentType(), replacement);
+		}
 	}
 
 	/**

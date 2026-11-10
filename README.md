@@ -2,9 +2,9 @@
 
 Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
 
-## Version 2.0.0 API
+## Version 2.1.0 API
 
-Project-scoped resources are reached through an immutable `ProjectScope`. Calling
+Since client 2.0.0, project-scoped resources are reached through an immutable `ProjectScope`. Calling
 `client.project("abbr")`, or navigating from that scope, makes no HTTP request and
 does not acquire a token. A scope keeps its original abbreviation after a project
 rename. `scope.get("other")` is the approved convenience lookup and does not
@@ -32,6 +32,8 @@ The example also accepts these values as Java system properties. System properti
 
 The configured Keycloak client must allow Direct Access Grants and have a client secret. The configured user must have the TrustDeck permissions required by the operations being performed.
 
+Since backend v2.4.0, TrustDeck only accepts access tokens whose `aud` claim contains `trustdeck`. Add an audience mapper to the configured Keycloak client: in the admin console, open **Clients → your client → Client scopes → your-client-dedicated**, choose **Configure a new mapper → Audience**, set **Included Client Audience** to `trustdeck`, and enable **Add to access token**. Without it, every request fails with `401 Unauthorized`. The same applies to tokens supplied through an `AccessTokenProvider`.
+
 ```java
 TrustDeckClientConfig config = TrustDeckClientConfig.builder()
 	.serviceUrl(System.getenv("TRUSTDECK_SERVICE_URL"))
@@ -51,7 +53,7 @@ The active Maven dependency is:
 <dependency>
     <groupId>org.trustdeck</groupId>
     <artifactId>client</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
@@ -59,12 +61,33 @@ Released versions are obtained from Maven Central and do not require
 repository-specific credentials.
 
 Client 2.0.0 supports the typed statistics responses introduced and completed
-in backend v2.3.0. The client and backend use independent version numbers.
+in backend v2.3.0. Client 2.1.0 adds the permission and project changes of
+backend v2.4.0 (see [Permissions](#permissions)) and the estimated statistics
+of backend v2.5.0, and works with backend v2.7.0. The later backend changes
+(calculated pseudonym lengths in v2.6.0, the removal of the built-in Kafka
+listener in v2.7.0) do not change the REST API. The client and backend use
+independent version numbers.
 
 ```java
 ProjectStatistics projectStatistics = trustdeck.project("research").getStatistics();
 SystemStatistics systemStatistics = trustdeck.system().getStatistics();
 ```
+
+By default the statistics avoid scanning large tables, so they can be sampled
+frequently: project statistics leave the entity and pseudonym counts `null`,
+and system statistics report PostgreSQL's live-row estimates
+(`recordCountExact = false`) together with a running insert counter per table
+(`insertedRecordCount`). Request exact counts explicitly when needed; this
+scans the tables and can take long for large projects:
+
+```java
+ProjectStatistics exactProject = trustdeck.project("research").getStatistics(true);
+SystemStatistics exactSystem = trustdeck.system().getStatistics(true);
+```
+
+The estimated variant and `insertedRecordCount` require backend v2.5.0 or
+newer. Older backends ignore the `exact` parameter, always count exactly, and
+leave `insertedRecordCount` empty (`null`).
 
 Project statistics requires `project:statistics` on the selected project.
 System statistics requires the global `system:statistics` permission. These
@@ -150,6 +173,22 @@ on a copied payload. Blank or conflicting values are rejected locally;
 case-insensitive matching preserves the caller's supplied value. The copy does
 not mutate the caller or nested algorithm data. This context does not prove or
 enforce domain ownership; backend authorization remains authoritative.
+
+## Permissions
+
+`client.permissions().getOwn()` returns the authenticated user's effective permissions. `getAvailable()` returns the catalogue of actions that can be granted, and `getAvailable("PROJECT")` limits it to one resource type (`PROJECT`, `DOMAIN`, `ENTITY_TYPE`, or `GLOBAL`).
+
+Permission updates synchronize a user's permissions for one resource with the given list and return the added and removed actions as a `PermissionReplacement`. Actions the requester may not grant themselves stay unchanged on the user. If the update adds such an action, the backend changes nothing and the client throws a `PermissionsRejectedException`, whose `getReplacement().getRejected()` lists the rejected actions. TrustDeck only accepts the decision `ALLOW`.
+
+```java
+try {
+	PermissionReplacement result = trustdeck.project("research").permissions().update(userId, permissions);
+} catch (PermissionsRejectedException e) {
+	List<String> rejected = e.getReplacement().getRejected();
+}
+```
+
+`client.projects().getAll()` lists the projects the user may read. `getAll(true)` lists all projects and requires the global `project:list-all` permission.
 
 ## Custom Access Tokens
 

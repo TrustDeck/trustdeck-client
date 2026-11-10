@@ -25,16 +25,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.List;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.trustdeck.client.exception.PermissionsRejectedException;
 import org.trustdeck.client.exception.RecordLinkageConflictException;
 import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.Domain;
 import org.trustdeck.client.model.Entity;
+import org.trustdeck.client.model.Permission;
+import org.trustdeck.client.model.PermissionReplacement;
 import org.trustdeck.client.model.ProjectImage;
 import org.trustdeck.client.model.ProjectDomain;
 import org.trustdeck.client.model.SearchResult;
@@ -118,6 +122,44 @@ class ResponseContractTest {
 	}
 
 	/**
+	 * Verifies that a successful permission update returns the added and removed actions.
+	 */
+	@Test
+	void returnsPermissionUpdateResult() {
+		PermissionReplacement result = client.project("granted").permissions().update("user", List.of(new Permission()));
+
+		assertEquals(List.of("project:read"), result.getAdded());
+		assertEquals(List.of("project:update"), result.getRemoved());
+		assertTrue(result.getRejected().isEmpty());
+	}
+
+	/**
+	 * Verifies that a permission update with actions the requester may not grant is
+	 * converted to a {@link PermissionsRejectedException} containing the rejected actions.
+	 */
+	@Test
+	void convertsRejectedPermissionUpdates() {
+		PermissionsRejectedException exception = assertThrows(PermissionsRejectedException.class,
+			() -> client.project("rejected").permissions().update("user", List.of(new Permission())));
+
+		assertEquals(403, exception.getStatusCode());
+		assertEquals(List.of("project:delete"), exception.getReplacement().getRejected());
+	}
+
+	/**
+	 * Verifies that a 403 without rejected actions, i.e. a missing permission to manage
+	 * the resource, stays a plain {@link TrustDeckResponseException}.
+	 */
+	@Test
+	void keepsForbiddenPermissionUpdatesWithoutRejectedActions() {
+		TrustDeckResponseException exception = assertThrows(TrustDeckResponseException.class,
+			() -> client.project("forbidden").permissions().update("user", List.of(new Permission())));
+
+		assertEquals(403, exception.getStatusCode());
+		assertFalse(exception instanceof PermissionsRejectedException);
+	}
+
+	/**
 	 * Verifies that the {@code Retry-After} response header is preserved in the
 	 * resulting {@link TrustDeckResponseException}.
 	 */
@@ -158,6 +200,13 @@ class ResponseContractTest {
 		} else if (path.equals("/api/domains/retry-after")) {
 			status = 429;
 			exchange.getResponseHeaders().set("Retry-After", "7");
+		} else if (path.equals("/api/permissions/projects/granted")) {
+			body = "{\"added\":[\"project:read\"],\"removed\":[\"project:update\"],\"rejected\":[]}".getBytes();
+		} else if (path.equals("/api/permissions/projects/rejected")) {
+			status = 403;
+			body = "{\"added\":[\"project:delete\"],\"removed\":[],\"rejected\":[\"project:delete\"]}".getBytes();
+		} else if (path.equals("/api/permissions/projects/forbidden")) {
+			status = 403;
 		} else if (path.endsWith("/entities/type") && exchange.getRequestMethod().equals("POST")) {
 			status = 409;
 			body = "[{\"id\":\"candidate\"}]".getBytes();

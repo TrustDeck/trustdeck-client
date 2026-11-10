@@ -55,7 +55,13 @@ public class Algorithm {
 	/** If a counter-based approach is used: the value of the counter. */
     private Long consecutiveValueCounter;
 
-	/** The length of the pseudonym/identifier. */
+	/**
+	 * The length of the pseudonym/identifier.
+	 * <p>
+	 * For random algorithms, leave it {@code null} so that the backend calculates the shortest length that
+	 * still allows the desired number of pseudonyms with the desired success probability. A shorter length
+	 * is raised to that minimum. Requires backend v2.6.0 or newer; older backends use their own default.
+	 */
     private Integer pseudonymLength;
 
 	/** The character used for padding to the desired length. */
