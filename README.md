@@ -1,3 +1,5 @@
+[![MvnRepository](https://badges.mvnrepository.com/badge/org.trustdeck/client/badge.svg?label=MvnRepository)](https://mvnrepository.com/artifact/org.trustdeck/client)
+
 # TrustDeck Client Library
 
 Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
