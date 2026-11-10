@@ -62,7 +62,10 @@ repository-specific credentials.
 
 Client 2.0.0 supports the typed statistics responses introduced and completed
 in backend v2.3.0. Client 2.1.0 adds the permission and project changes of
-backend v2.4.0 (see [Permissions](#permissions)). The client and backend use
+backend v2.4.0 (see [Permissions](#permissions)) and the estimated statistics
+of backend v2.5.0, and works with backend v2.7.0. The later backend changes
+(calculated pseudonym lengths in v2.6.0, the removal of the built-in Kafka
+listener in v2.7.0) do not change the REST API. The client and backend use
 independent version numbers.
 
 ```java
