@@ -4,7 +4,7 @@
 
 Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
 
-## Version 2.1.0 API
+## Version 2.2.0 API
 
 Since client 2.0.0, project-scoped resources are reached through an immutable `ProjectScope`. Calling
 `client.project("abbr")`, or navigating from that scope, makes no HTTP request and
@@ -55,7 +55,7 @@ The active Maven dependency is:
 <dependency>
     <groupId>org.trustdeck</groupId>
     <artifactId>client</artifactId>
-    <version>2.1.0</version>
+    <version>2.2.0</version>
 </dependency>
 ```
 
@@ -67,8 +67,10 @@ in backend v2.3.0. Client 2.1.0 adds the permission and project changes of
 backend v2.4.0 (see [Permissions](#permissions)) and the estimated statistics
 of backend v2.5.0, and works with backend v2.7.0. The later backend changes
 (calculated pseudonym lengths in v2.6.0, the removal of the built-in Kafka
-listener in v2.7.0) do not change the REST API. The client and backend use
-independent version numbers.
+listener in v2.7.0) do not change the REST API. Client 2.2.0 reads the
+pseudonyms of a domain page by page, which backend v2.8.0 requires (see
+[Reading All Pseudonyms of a Domain](#reading-all-pseudonyms-of-a-domain)).
+The client and backend use independent version numbers.
 
 ```java
 ProjectStatistics projectStatistics = trustdeck.project("research").getStatistics();
@@ -94,6 +96,30 @@ leave `insertedRecordCount` empty (`null`).
 Project statistics requires `project:statistics` on the selected project.
 System statistics requires the global `system:statistics` permission. These
 permissions are enforced by the backend.
+
+## Reading All Pseudonyms of a Domain
+
+Since backend v2.8.0, the pseudonyms of a domain are returned page by page,
+ordered by pseudonym value. Each page carries an opaque cursor for the next
+one, so every page is read in the same time, however large the domain is.
+`streamBatch` follows the cursors while the stream is consumed and holds only
+one page in memory:
+
+```java
+try (Stream<Pseudonym> all = trustdeck.project("research").pseudonyms("domain").streamBatch(1000)) {
+    all.forEach(pseudonym -> process(pseudonym));
+}
+```
+
+`getBatchPage(cursor, size)` reads a single page; pass the `nextCursor` of a
+page to get the following one, which is `null` on the last page. The page size
+defaults to the backend's `batch-page-size` and is limited by its
+`batch-length`. `getBatch()` still returns the whole domain as a list, but is
+deprecated because it holds every pseudonym in memory.
+
+`deleteBatch()` deletes all pseudonyms of a domain. Since backend v2.8.0 this
+happens atomically and is answered with 204; older backends could report a
+partial deletion with 206.
 
 ## Running the Example
 
