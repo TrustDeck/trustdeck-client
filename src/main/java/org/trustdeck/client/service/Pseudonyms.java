@@ -20,13 +20,16 @@ package org.trustdeck.client.service;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.trustdeck.client.Response;
 import org.trustdeck.client.TrustDeckHttpClient;
 import org.trustdeck.client.model.BatchResult;
+import org.trustdeck.client.model.CursorPage;
 import org.trustdeck.client.model.IdentifierItem;
 import org.trustdeck.client.model.Pseudonym;
 import org.trustdeck.client.model.PseudonymUpdate;
@@ -193,13 +196,45 @@ public class Pseudonyms {
 	}
 
 	/**
-	 * Gets all pseudonyms in the domain.
+	 * Gets one page of the pseudonyms in the domain, ordered by pseudonym value.
+	 * Every page is read in the same time, however large the domain is (requires backend v2.8.0 or newer).
+	 * 
+	 * @param cursor the {@code nextCursor} of the previous page, or {@code null} for the first page
+	 * @param size the maximum number of pseudonyms on the page, or {@code null} for the backend's default
+	 * @return the page, whose {@code nextCursor} is {@code null} on the last page
+	 */
+	public CursorPage<Pseudonym> getBatchPage(String cursor, Integer size) {
+		// Parameters without a value are left out of the request
+		Map<String, Object> parameters = new LinkedHashMap<>();
+		parameters.put("cursor", cursor);
+		parameters.put("size", size);
+
+		return http.exchange(HttpMethod.GET, http.uri(path("batch"), parameters), null,
+				new ParameterizedTypeReference<CursorPage<Pseudonym>>() {}, Set.of(200), true).getBody();
+	}
+
+	/**
+	 * Streams all pseudonyms in the domain. The first page is read immediately, every following page only
+	 * when the stream reaches it, so only one page is held in memory at a time.
+	 * 
+	 * @param pageSize the number of pseudonyms read per request, or {@code null} for the backend's default
+	 * @return the pseudonyms of the domain, ordered by pseudonym value
+	 */
+	public Stream<Pseudonym> streamBatch(Integer pageSize) {
+		return Stream.iterate(getBatchPage(null, pageSize), Objects::nonNull,
+						page -> page.nextCursor() == null ? null : getBatchPage(page.nextCursor(), pageSize))
+				.flatMap(page -> page.items().stream());
+	}
+
+	/**
+	 * Gets all pseudonyms in the domain at once.
 	 * 
 	 * @return pseudonyms
+	 * @deprecated holds the whole domain in memory; use {@link #streamBatch(Integer)} or {@link #getBatchPage(String, Integer)}
 	 */
+	@Deprecated(since = "2.2.0")
 	public List<Pseudonym> getBatch() {
-		return http.exchange(HttpMethod.GET, http.uri(path("batch"), Map.of()), null,
-				new ParameterizedTypeReference<List<Pseudonym>>() {}, Set.of(200), true).getBody();
+		return streamBatch(null).toList();
 	}
 
 	/**
@@ -235,7 +270,8 @@ public class Pseudonyms {
 	}
 
 	/**
-	 * Deletes all pseudonyms in a batch; HTTP 206 is partial completion.
+	 * Deletes all pseudonyms in the domain. Since backend v2.8.0 the deletion is atomic and answers 204;
+	 * older backends may answer 206 with per-pseudonym results for a partial deletion.
 	 * 
 	 * @return batch result
 	 */

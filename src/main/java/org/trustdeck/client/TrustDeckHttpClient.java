@@ -38,6 +38,7 @@ import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.HttpStatusInfo;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -279,16 +280,17 @@ public final class TrustDeckHttpClient {
 					value = mapper.readValue(bytes, classType);
 				}
 
-				// Deserialize a non-empty response, treating an empty JSON object ("{}") as an empty list
+				// Deserialize a non-empty response, treating an empty JSON object ("{}") as an empty list when a list is expected
 				if (genericType != null && bytes.length > 0) {
 					String text = new String(bytes, StandardCharsets.UTF_8).trim();
+					JavaType javaType = mapper.constructType(genericType.getType());
 					@SuppressWarnings("unchecked") T emptyList = (T) List.of();
 
-					if ("{}".equals(text)) {
+					if ("{}".equals(text) && javaType.isCollectionLikeType()) {
 						log.trace("Interpreting an empty JSON object as an empty list.");
 						value = emptyList;
 					} else {
-						value = mapper.readValue(bytes, mapper.constructType(genericType.getType()));
+						value = mapper.readValue(bytes, javaType);
 					}
 				}
 
