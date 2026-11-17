@@ -227,17 +227,6 @@ public class Pseudonyms {
 	}
 
 	/**
-	 * Gets all pseudonyms in the domain at once.
-	 * 
-	 * @return pseudonyms
-	 * @deprecated holds the whole domain in memory; use {@link #streamBatch(Integer)} or {@link #getBatchPage(String, Integer)}
-	 */
-	@Deprecated(since = "2.2.0")
-	public List<Pseudonym> getBatch() {
-		return streamBatch(null).toList();
-	}
-
-	/**
 	 * Updates pseudonyms in a batch.
 	 * 
 	 * @param updates update payloads

@@ -105,14 +105,6 @@ class CursorPagingTest {
 		assertEquals(1, queries.size(), queries.toString());
 	}
 
-	/** The deprecated method still returns the whole domain, collected from all pages. */
-	@Test
-	@SuppressWarnings("deprecation")
-	void deprecatedGetBatchCollectsAllPages() {
-		assertEquals(5, pseudonyms.getBatch().size());
-		assertEquals(3, queries.size());
-	}
-
 	private static void respond(HttpExchange exchange) throws IOException {
 		String query = exchange.getRequestURI().getRawQuery();
 		queries.add(query == null ? "" : query);
