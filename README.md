@@ -4,7 +4,7 @@
 
 Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
 
-## Version 3.0.0 API
+## Version 2.2.0 API
 
 Since client 2.0.0, project-scoped resources are reached through an immutable `ProjectScope`. Calling
 `client.project("abbr")`, or navigating from that scope, makes no HTTP request and
@@ -55,7 +55,7 @@ The active Maven dependency is:
 <dependency>
     <groupId>org.trustdeck</groupId>
     <artifactId>client</artifactId>
-    <version>3.0.0</version>
+    <version>2.2.0</version>
 </dependency>
 ```
 
@@ -67,7 +67,7 @@ in backend v2.3.0. Client 2.1.0 adds the permission and project changes of
 backend v2.4.0 (see [Permissions](#permissions)) and the estimated statistics
 of backend v2.5.0, and works with backend v2.7.0. The later backend changes
 (calculated pseudonym lengths in v2.6.0, the removal of the built-in Kafka
-listener in v2.7.0) do not change the REST API. Client 3.0.0 reads the
+listener in v2.7.0) do not change the REST API. Client 2.2.0 reads the
 pseudonyms of a domain page by page, which backend v2.8.0 requires (see
 [Reading All Pseudonyms of a Domain](#reading-all-pseudonyms-of-a-domain)).
 The client and backend use independent version numbers.
@@ -115,7 +115,7 @@ try (Stream<Pseudonym> all = trustdeck.project("research").pseudonyms("domain").
 page to get the following one, which is `null` on the last page. The page size
 defaults to the backend's `batch-page-size` and is limited by its
 `batch-length`. The former `getBatch()`, which returned the whole domain as
-one list, was removed in client 3.0.0.
+one list, was removed in client 2.2.0.
 
 `deleteBatch()` deletes all pseudonyms of a domain. Since backend v2.8.0 this
 happens atomically and is answered with 204; older backends could report a
