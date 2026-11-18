@@ -140,7 +140,6 @@ class PublicEndpointContractTest {
 		cases.add(c("PseudonymController updateComplete", "PUT", "/api/domains/domain/pseudonyms/complete", Map.of("regeneratePseudonym", "true"), true, true, () -> projectScope.pseudonyms("domain").updateComplete(update, true)));
 		cases.add(c("PseudonymController update", "PUT", "/api/domains/domain/pseudonyms", Map.of(), true, true, () -> projectScope.pseudonyms("domain").update(update)));
 		cases.add(c("PseudonymController validate", "GET", "/api/domains/domain/pseudonyms/validation", Map.of("psn", "psn"), false, true, () -> projectScope.pseudonyms("domain").validate("psn")));
-		cases.add(c("PseudonymController search", "GET", "/api/domains/domain/pseudonyms", Map.of("query", "query"), false, true, () -> projectScope.pseudonyms("domain").search("query")));
 		cases.add(c("ProjectController create", "POST", "/api/projects", Map.of(), true, true, () -> client.projects().create(project)));
 		cases.add(c("ProjectController list", "GET", "/api/projects", Map.of(), false, true, () -> client.projects().getAll()));
 		cases.add(c("ProjectController listAll", "GET", "/api/projects", Map.of("all", "true"), false, true, () -> client.projects().getAll(true)));
@@ -193,7 +192,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().delete("user", permissions)));
 		cases.add(c("PermissionController globalDelete", "DELETE", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().deleteGlobal("user", permissions)));
 		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").delete("user", permissions)));
-		assertEquals(78, cases.size());
+		assertEquals(77, cases.size());
 		
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
 	}

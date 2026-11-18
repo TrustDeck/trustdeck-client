@@ -33,7 +33,6 @@ import org.trustdeck.client.model.CursorPage;
 import org.trustdeck.client.model.IdentifierItem;
 import org.trustdeck.client.model.Pseudonym;
 import org.trustdeck.client.model.PseudonymUpdate;
-import org.trustdeck.client.model.SearchResult;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -306,20 +305,6 @@ public class Pseudonyms {
 	public boolean validate(String psn) {
 		return http.exchange(HttpMethod.GET, http.uri(path("validation"), 
 				Map.of("psn", TrustDeckHttpClient.require(psn, "psn"))), null, Boolean.class, Set.of(200), true).getBody();
-	}
-
-	/**
-	 * Searches pseudonyms.
-	 * 
-	 * @param query search query
-	 * @return search result and an indicator if the search result is a partial result
-	 */
-	public SearchResult<Pseudonym> search(String query) {
-		Response<List<Pseudonym>> response = http.exchange(HttpMethod.GET, http.uri(path(), 
-				Map.of("query", TrustDeckHttpClient.require(query, "query"))), null,
-				new ParameterizedTypeReference<List<Pseudonym>>() {}, Set.of(200, 206), true);
-
-		return new SearchResult<>(response.getBody(), response.getStatus() == 206);
 	}
 	
 	/**
