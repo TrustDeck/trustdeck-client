@@ -4,7 +4,7 @@
 
 Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
 
-## Version 2.2.0 API
+## Version 2.3.0 API
 
 Since client 2.0.0, project-scoped resources are reached through an immutable `ProjectScope`. Calling
 `client.project("abbr")`, or navigating from that scope, makes no HTTP request and
@@ -55,7 +55,7 @@ The active Maven dependency is:
 <dependency>
     <groupId>org.trustdeck</groupId>
     <artifactId>client</artifactId>
-    <version>2.2.0</version>
+    <version>2.3.0</version>
 </dependency>
 ```
 
@@ -70,6 +70,8 @@ of backend v2.5.0, and works with backend v2.7.0. The later backend changes
 listener in v2.7.0) do not change the REST API. Client 2.2.0 reads the
 pseudonyms of a domain page by page, which backend v2.8.0 requires (see
 [Reading All Pseudonyms of a Domain](#reading-all-pseudonyms-of-a-domain)).
+Client 2.3.0 removes the unpaged pseudonym search `search(query)`, whose
+backend endpoint was removed in v2.8.0.
 The client and backend use independent version numbers.
 
 ```java
