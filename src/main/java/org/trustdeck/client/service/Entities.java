@@ -34,6 +34,7 @@ import org.trustdeck.client.model.Pseudonym;
 import org.trustdeck.client.model.RecordLinkageCandidate;
 import org.trustdeck.client.model.RecordLinkageCandidate.RecordLinkageResolutionStrategy;
 import org.trustdeck.client.model.SearchResult;
+import org.trustdeck.client.model.SearchResultPage;
 
 /**
  * Operations for entities scoped to a projectAbbreviation and typeName.
@@ -155,6 +156,50 @@ public class Entities {
 				null, new ParameterizedTypeReference<List<Entity>>() {}, Set.of(200, 206), true);
 
 		return new SearchResult<>(response.getBody(), response.getStatus() == 206);
+	}
+
+	/**
+	 * Searches one page of the entities of this type with the backend's default matching and order:
+	 * words beginning with the query parts, best match first ("*" lists all, most recently updated first).
+	 * 
+	 * @param query the search query; every whitespace-separated part must match, "*" matches all entities
+	 * @param page the zero-based page index
+	 * @param size the maximum number of entities on the page, or {@code null} for the backend's default (20)
+	 * @return the page of matching entities
+	 */
+	public SearchResultPage<Entity> searchPage(String query, int page, Integer size) {
+		return searchPage(query, page, size, null, null, null);
+	}
+
+	/**
+	 * Searches one page of the entities of this type (requires backend v2.9.0 or newer).
+	 * 
+	 * Sorting by an attribute without a sort index ({@code "sortIndex": true} in the type definition)
+	 * is refused with HTTP 422 when more entities match than the backend's count limit.
+	 * 
+	 * @param query the search query; every whitespace-separated part must match, "*" matches all entities
+	 * @param page the zero-based page index
+	 * @param size the maximum number of entities on the page, or {@code null} for the backend's default (20)
+	 * @param match "prefix" to match the beginning of words, "contains" to match anywhere in the data,
+	 *        or {@code null} for "prefix"
+	 * @param sort "relevance", "trustDeckId", "createdAt", "updatedAt", or "attribute:" followed by an
+	 *        attribute path (e.g. "attribute:address.city"); {@code null} sorts "*" by "updatedAt" (newest
+	 *        first) and other queries by relevance
+	 * @param direction "asc" or "desc", or {@code null} for "asc"; ignored for relevance
+	 * @return the page of matching entities
+	 */
+	public SearchResultPage<Entity> searchPage(String query, int page, Integer size, String match, String sort, String direction) {
+		// Parameters without a value are left out of the request
+		Map<String, Object> parameters = new LinkedHashMap<>();
+		parameters.put("query", TrustDeckHttpClient.require(query, "query"));
+		parameters.put("page", page);
+		parameters.put("size", size);
+		parameters.put("match", match);
+		parameters.put("sort", sort);
+		parameters.put("direction", direction);
+
+		return http.exchange(HttpMethod.GET, http.uri(path(), parameters), null,
+				new ParameterizedTypeReference<SearchResultPage<Entity>>() {}, Set.of(200), true).getBody();
 	}
 
 	/**

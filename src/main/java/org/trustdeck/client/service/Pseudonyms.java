@@ -33,6 +33,7 @@ import org.trustdeck.client.model.CursorPage;
 import org.trustdeck.client.model.IdentifierItem;
 import org.trustdeck.client.model.Pseudonym;
 import org.trustdeck.client.model.PseudonymUpdate;
+import org.trustdeck.client.model.SearchResultPage;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -192,6 +193,46 @@ public class Pseudonyms {
 	 */
 	public Pseudonym get(String psn) {
 		return request(HttpMethod.GET, path(), Map.of("psn", TrustDeckHttpClient.require(psn, "psn")), null, Set.of(200));
+	}
+
+	/**
+	 * Searches one page of the currently valid pseudonyms in the domain, matching the beginning of the
+	 * identifier, ID type, or pseudonym, ordered by pseudonym.
+	 * 
+	 * @param query the search query; every whitespace-separated part must match, "*" matches all pseudonyms
+	 * @param page the zero-based page index
+	 * @param size the maximum number of pseudonyms on the page, or {@code null} for the backend's default (20)
+	 * @return the page of matching pseudonyms
+	 */
+	public SearchResultPage<Pseudonym> searchPage(String query, int page, Integer size) {
+		return searchPage(query, page, size, null, null, null);
+	}
+
+	/**
+	 * Searches one page of the currently valid pseudonyms in the domain.
+	 * 
+	 * @param query the search query; every whitespace-separated part must match the identifier, the ID
+	 *        type, or the pseudonym, case-insensitively; "*" matches all pseudonyms
+	 * @param page the zero-based page index
+	 * @param size the maximum number of pseudonyms on the page, or {@code null} for the backend's default (20)
+	 * @param match "prefix" to match the beginning of the values (uses the database indexes), "contains"
+	 *        to match anywhere (needs at least three characters per part), or {@code null} for "prefix"
+	 * @param sort "pseudonym", "identifier", or "idType", or {@code null} for "pseudonym"
+	 * @param direction "asc" or "desc", or {@code null} for "asc"
+	 * @return the page of matching pseudonyms
+	 */
+	public SearchResultPage<Pseudonym> searchPage(String query, int page, Integer size, String match, String sort, String direction) {
+		// Parameters without a value are left out of the request
+		Map<String, Object> parameters = new LinkedHashMap<>();
+		parameters.put("query", TrustDeckHttpClient.require(query, "query"));
+		parameters.put("page", page);
+		parameters.put("size", size);
+		parameters.put("match", match);
+		parameters.put("sort", sort);
+		parameters.put("direction", direction);
+
+		return http.exchange(HttpMethod.GET, http.uri(path(), parameters), null,
+				new ParameterizedTypeReference<SearchResultPage<Pseudonym>>() {}, Set.of(200), true).getBody();
 	}
 
 	/**

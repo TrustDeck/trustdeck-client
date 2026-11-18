@@ -133,6 +133,8 @@ class PublicEndpointContractTest {
 		cases.add(c("PseudonymController deleteIdentifier", "DELETE", "/api/domains/domain/pseudonyms", Map.of("id", "id value", "idType", "type"), false, true, () -> projectScope.pseudonyms("domain").delete(identifier)));
 		cases.add(c("PseudonymController linked", "GET", "/api/domains/linked-pseudonyms", Map.of("sourceDomain", "domain", "targetDomain", "target"), false, true, () -> projectScope.pseudonyms("domain").getLinkedPseudonyms("target", null, null, null)));
 		cases.add(c("PseudonymController getBatchPage", "GET", "/api/domains/domain/pseudonyms/batch", Map.of("cursor", "abc", "size", "50"), false, true, () -> projectScope.pseudonyms("domain").getBatchPage("abc", 50)));
+		cases.add(c("PseudonymController searchPage", "GET", "/api/domains/domain/pseudonyms", Map.of("query", "query", "page", "2"), false, true, () -> projectScope.pseudonyms("domain").searchPage("query", 2, null)));
+		cases.add(c("PseudonymController searchPage sorted", "GET", "/api/domains/domain/pseudonyms", Map.of("query", "query", "page", "0", "size", "50", "match", "contains", "sort", "identifier", "direction", "desc"), false, true, () -> projectScope.pseudonyms("domain").searchPage("query", 0, 50, "contains", "identifier", "desc")));
 		cases.add(c("PseudonymController getBatchPage first", "GET", "/api/domains/domain/pseudonyms/batch", Map.of(), false, true, () -> projectScope.pseudonyms("domain").getBatchPage(null, null)));
 		cases.add(c("PseudonymController getIdentifier", "GET", "/api/domains/domain/pseudonyms", Map.of("id", "id value", "idType", "type"), false, true, () -> projectScope.pseudonyms("domain").get(identifier)));
 		cases.add(c("PseudonymController getPsn", "GET", "/api/domains/domain/pseudonyms", Map.of("psn", "psn"), false, true, () -> projectScope.pseudonyms("domain").get("psn")));
@@ -170,6 +172,8 @@ class PublicEndpointContractTest {
 		cases.add(c("EntityController update", "PUT", "/api/projects/project/entities/type/" + id, Map.of(), true, true, () -> projectScope.entities("type").update(id, entity)));
 		cases.add(c("EntityController delete", "DELETE", "/api/projects/project/entities/type/" + id, Map.of(), false, true, () -> projectScope.entities("type").delete(id)));
 		cases.add(c("EntityController search", "GET", "/api/projects/project/entities/type", Map.of("query", "query"), false, true, () -> projectScope.entities("type").search("query")));
+		cases.add(c("EntityController searchPage", "GET", "/api/projects/project/entities/type", Map.of("query", "query", "page", "1"), false, true, () -> projectScope.entities("type").searchPage("query", 1, null)));
+		cases.add(c("EntityController searchPage sorted", "GET", "/api/projects/project/entities/type", Map.of("query", "*", "page", "0", "size", "25", "match", "prefix", "sort", "attribute:address.city", "direction", "asc"), false, true, () -> projectScope.entities("type").searchPage("*", 0, 25, "prefix", "attribute:address.city", "asc")));
 		cases.add(c("EntityController pseudonyms", "GET", "/api/projects/project/entities/type/" + id + "/pseudonyms", Map.of(), false, true, () -> projectScope.entities("type").getPseudonyms(id)));
 		cases.add(c("EntityController recordLinkage", "POST", "/api/projects/project/entities/type/record-linkage", Map.of(), true, true, () -> projectScope.entities("type").findRecordLinkageCandidates(entity)));
 		cases.add(c("PermissionController userSearch", "GET", "/api/permissions/users", Map.of("query", "query"), false, true, () -> client.permissions().searchUsers("query")));
@@ -192,7 +196,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().delete("user", permissions)));
 		cases.add(c("PermissionController globalDelete", "DELETE", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().deleteGlobal("user", permissions)));
 		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").delete("user", permissions)));
-		assertEquals(77, cases.size());
+		assertEquals(81, cases.size());
 		
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
 	}

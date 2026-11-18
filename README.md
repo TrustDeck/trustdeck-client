@@ -70,8 +70,10 @@ of backend v2.5.0, and works with backend v2.7.0. The later backend changes
 listener in v2.7.0) do not change the REST API. Client 2.2.0 reads the
 pseudonyms of a domain page by page, which backend v2.8.0 requires (see
 [Reading All Pseudonyms of a Domain](#reading-all-pseudonyms-of-a-domain)).
-It also removes the unpaged pseudonym search `search(query)`, whose backend
-endpoint was removed in v2.8.0.
+It also replaces the unpaged pseudonym search `search(query)`, whose backend
+endpoint was removed in v2.8.0, with paged searches for pseudonyms and entities
+(see [Searching Page by Page](#searching-page-by-page)); the entity search
+requires backend v2.9.0.
 The client and backend use independent version numbers.
 
 ```java
@@ -98,6 +100,26 @@ leave `insertedRecordCount` empty (`null`).
 Project statistics requires `project:statistics` on the selected project.
 System statistics requires the global `system:statistics` permission. These
 permissions are enforced by the backend.
+
+## Searching Page by Page
+
+Pseudonym and entity searches return one page at a time, addressed by its page
+number. The backend counts the matches only up to its count limit;
+`numberOfMatchesExceedsSearchLimit` says whether more match than `total`:
+
+```java
+SearchResultPage<Pseudonym> page = trustdeck.project("research").pseudonyms("domain").searchPage("PSN-12", 0, 20);
+SearchResultPage<Entity> people = trustdeck.project("research").entities("Person")
+        .searchPage("*", 0, 50, null, "attribute:address.city", "asc");
+```
+
+The longer variant also selects the matching (`prefix` or `contains`), the order,
+and its direction. Pseudonyms can be ordered by `pseudonym`, `identifier`, or
+`idType`; entities by `relevance`, `trustDeckId`, `createdAt`, `updatedAt`, or
+`attribute:<path>`. Sorting entities by an attribute without `"sortIndex": true`
+in the type definition is refused with HTTP 422 when more entities match than
+the count limit. To read all pseudonyms of a domain, use `streamBatch` instead
+(see below).
 
 ## Reading All Pseudonyms of a Domain
 
