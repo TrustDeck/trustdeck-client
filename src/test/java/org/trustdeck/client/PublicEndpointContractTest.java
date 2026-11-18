@@ -132,7 +132,8 @@ class PublicEndpointContractTest {
 		cases.add(c("PseudonymController deleteBatch", "DELETE", "/api/domains/domain/pseudonyms/batch", Map.of(), false, true, () -> projectScope.pseudonyms("domain").deleteBatch()));
 		cases.add(c("PseudonymController deleteIdentifier", "DELETE", "/api/domains/domain/pseudonyms", Map.of("id", "id value", "idType", "type"), false, true, () -> projectScope.pseudonyms("domain").delete(identifier)));
 		cases.add(c("PseudonymController linked", "GET", "/api/domains/linked-pseudonyms", Map.of("sourceDomain", "domain", "targetDomain", "target"), false, true, () -> projectScope.pseudonyms("domain").getLinkedPseudonyms("target", null, null, null)));
-		cases.add(c("PseudonymController getBatch", "GET", "/api/domains/domain/pseudonyms/batch", Map.of(), false, true, () -> projectScope.pseudonyms("domain").getBatch()));
+		cases.add(c("PseudonymController getBatchPage", "GET", "/api/domains/domain/pseudonyms/batch", Map.of("cursor", "abc", "size", "50"), false, true, () -> projectScope.pseudonyms("domain").getBatchPage("abc", 50)));
+		cases.add(c("PseudonymController getBatchPage first", "GET", "/api/domains/domain/pseudonyms/batch", Map.of(), false, true, () -> projectScope.pseudonyms("domain").getBatchPage(null, null)));
 		cases.add(c("PseudonymController getIdentifier", "GET", "/api/domains/domain/pseudonyms", Map.of("id", "id value", "idType", "type"), false, true, () -> projectScope.pseudonyms("domain").get(identifier)));
 		cases.add(c("PseudonymController getPsn", "GET", "/api/domains/domain/pseudonyms", Map.of("psn", "psn"), false, true, () -> projectScope.pseudonyms("domain").get("psn")));
 		cases.add(c("PseudonymController updateBatch", "PUT", "/api/domains/domain/pseudonyms/batch", Map.of(), true, true, () -> projectScope.pseudonyms("domain").updateBatch(List.of(update))));
@@ -192,7 +193,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().delete("user", permissions)));
 		cases.add(c("PermissionController globalDelete", "DELETE", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().deleteGlobal("user", permissions)));
 		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").delete("user", permissions)));
-		assertEquals(77, cases.size());
+		assertEquals(78, cases.size());
 		
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
 	}
