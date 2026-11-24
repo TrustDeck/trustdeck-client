@@ -47,10 +47,10 @@ public class TrustDeckClientConfig {
 	/** The client secret for authenticating against Keycloak. */
 	private String clientSecret;
 
-	/** The user name for authenticating against Keycloak. */
+	/** The user name for authenticating against Keycloak. Only used with {@link GrantType#PASSWORD}. */
 	private String userName;
 
-	/** The user's password for authenticating against Keycloak. */
+	/** The user's password for authenticating against Keycloak. Only used with {@link GrantType#PASSWORD}. */
 	private String password;
 
 	/** Maximum time to establish an HTTP connection. */
@@ -62,10 +62,30 @@ public class TrustDeckClientConfig {
 	private Duration readTimeout = TrustDeckHttpClient.DEFAULT_READ_TIMEOUT;
 
 	/**
+	 * The OAuth 2.0 grant used to obtain tokens from Keycloak. Defaults to {@link GrantType#PASSWORD}.
+	 * With {@link GrantType#CLIENT_CREDENTIALS}, the client's service account is used and
+	 * no user name or password is needed.
+	 */
+	@Builder.Default
+	private GrantType grantType = GrantType.PASSWORD;
+
+	/**
+	 * The OAuth 2.0 grants the client can use to obtain tokens from Keycloak.
+	 */
+	public enum GrantType {
+
+		/** Resource owner password credentials: client ID, client secret, user name, and password. */
+		PASSWORD,
+
+		/** Client credentials: client ID and client secret of a client with an enabled service account. */
+		CLIENT_CREDENTIALS
+	}
+
+	/**
 	 * Creates empty configuration for builder-generated population.
 	 */
 	public TrustDeckClientConfig() {
-		// Nothing to do
+		this.grantType = GrantType.PASSWORD;
 	}
 
 	/**
@@ -100,6 +120,25 @@ public class TrustDeckClientConfig {
 	 */
 	public TrustDeckClientConfig(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret,
 			String userName, String password, Duration connectTimeout, Duration readTimeout) {
+		this(serviceUrl, keycloakUrl, realm, clientId, clientSecret, userName, password, connectTimeout, readTimeout, GrantType.PASSWORD);
+	}
+
+	/**
+	 * Creates configuration with authentication, service, transport, and grant values.
+	 *
+	 * @param serviceUrl TrustDeck service URL
+	 * @param keycloakUrl Keycloak URL
+	 * @param realm Keycloak realm
+	 * @param clientId Keycloak client ID
+	 * @param clientSecret Keycloak client secret
+	 * @param userName user name, only used with {@link GrantType#PASSWORD}
+	 * @param password password, only used with {@link GrantType#PASSWORD}
+	 * @param connectTimeout maximum time to establish an HTTP connection
+	 * @param readTimeout maximum time between response bytes
+	 * @param grantType the grant used to obtain tokens; {@code null} means {@link GrantType#PASSWORD}
+	 */
+	public TrustDeckClientConfig(String serviceUrl, String keycloakUrl, String realm, String clientId, String clientSecret,
+			String userName, String password, Duration connectTimeout, Duration readTimeout, GrantType grantType) {
 		this.serviceUrl = serviceUrl;
 		this.keycloakUrl = keycloakUrl;
 		this.realm = realm;
@@ -109,5 +148,32 @@ public class TrustDeckClientConfig {
 		this.password = password;
 		this.connectTimeout = connectTimeout;
 		this.readTimeout = readTimeout;
+		this.grantType = grantType == null ? GrantType.PASSWORD : grantType;
+	}
+
+	/**
+	 * Creates configuration that authenticates with the client credentials grant,
+	 * i.e. as the service account of the given confidential Keycloak client.
+	 *
+	 * @param serviceUrl TrustDeck service URL
+	 * @param keycloakUrl Keycloak URL
+	 * @param realm Keycloak realm
+	 * @param clientId Keycloak client ID
+	 * @param clientSecret Keycloak client secret
+	 * @return configuration using {@link GrantType#CLIENT_CREDENTIALS}
+	 */
+	public static TrustDeckClientConfig clientCredentials(String serviceUrl, String keycloakUrl, String realm, String clientId,
+			String clientSecret) {
+		return new TrustDeckClientConfig(serviceUrl, keycloakUrl, realm, clientId, clientSecret, null, null,
+				TrustDeckHttpClient.DEFAULT_CONNECT_TIMEOUT, TrustDeckHttpClient.DEFAULT_READ_TIMEOUT, GrantType.CLIENT_CREDENTIALS);
+	}
+
+	/**
+	 * Returns whether tokens are obtained with the client credentials grant.
+	 *
+	 * @return {@code true} for {@link GrantType#CLIENT_CREDENTIALS}
+	 */
+	public boolean usesClientCredentials() {
+		return grantType == GrantType.CLIENT_CREDENTIALS;
 	}
 }

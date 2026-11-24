@@ -4,7 +4,7 @@
 
 Synchronous Java access to TrustDeck domains, pseudonyms, projects, project images, entity types, generic entities, permissions, users, and health.
 
-## Version 2.2.0 API
+## Version 2.3.0 API
 
 Since client 2.0.0, project-scoped resources are reached through an immutable `ProjectScope`. Calling
 `client.project("abbr")`, or navigating from that scope, makes no HTTP request and
@@ -18,7 +18,7 @@ The library requires Java 21 or newer. Maven is used to build the project and to
 
 ## Configuration
 
-Create a `TrustDeckClient` with password-grant settings, preferably loaded from environment variables or a secrets manager. Applications with another OAuth flow may provide an `AccessTokenProvider` instead.
+Create a `TrustDeckClient` with password-grant or client-credentials settings, preferably loaded from environment variables or a secrets manager. Applications with another OAuth flow may provide an `AccessTokenProvider` instead.
 
 `TrustDeckClientExample` reads the connection details from these environment variables:
 
@@ -32,7 +32,7 @@ Create a `TrustDeckClient` with password-grant settings, preferably loaded from 
 
 The example also accepts these values as Java system properties. System properties take precedence over environment variables when both are provided.
 
-The configured Keycloak client must allow Direct Access Grants and have a client secret. The configured user must have the TrustDeck permissions required by the operations being performed.
+For the password grant (the default), the configured Keycloak client must allow Direct Access Grants and have a client secret. The configured user must have the TrustDeck permissions required by the operations being performed.
 
 Since backend v2.4.0, TrustDeck only accepts access tokens whose `aud` claim contains `trustdeck`. Add an audience mapper to the configured Keycloak client: in the admin console, open **Clients → your client → Client scopes → your-client-dedicated**, choose **Configure a new mapper → Audience**, set **Included Client Audience** to `trustdeck`, and enable **Add to access token**. Without it, every request fails with `401 Unauthorized`. The same applies to tokens supplied through an `AccessTokenProvider`.
 
@@ -49,13 +49,31 @@ TrustDeckClientConfig config = TrustDeckClientConfig.builder()
 TrustDeckClient trustdeck = new TrustDeckClient(config);
 ```
 
+### Client Credentials (Service Accounts)
+
+Technical integrations, e.g. another application's backend, can authenticate as the service account of a confidential Keycloak client instead of as a user. Enable **Client authentication** and **Service accounts** on the client (Direct Access Grants are not needed), add the audience mapper described above, and grant the TrustDeck permissions to the client's service-account user (`service-account-<client-id>`). No user name or password is configured:
+
+```java
+TrustDeckClientConfig config = TrustDeckClientConfig.clientCredentials(
+	System.getenv("TRUSTDECK_SERVICE_URL"),
+	System.getenv("TRUSTDECK_KEYCLOAK_URL"),
+	System.getenv("TRUSTDECK_REALM"),
+	System.getenv("TRUSTDECK_CLIENT_ID"),
+	System.getenv("TRUSTDECK_CLIENT_SECRET"));
+TrustDeckClient trustdeck = new TrustDeckClient(config);
+```
+
+The builder accepts the same setting through `.grantType(TrustDeckClientConfig.GrantType.CLIENT_CREDENTIALS)`. Keycloak issues no refresh token for this grant; the client requests a new token shortly before the current one expires.
+
+Keycloak's user search does not necessarily list service-account users. Read the user's ID from the client's **Service account roles** tab, from `GET /admin/realms/{realm}/clients/{id}/service-account-user`, or from the `sub` claim of a token, and grant permissions with that ID.
+
 The active Maven dependency is:
 
 ```xml
 <dependency>
     <groupId>org.trustdeck</groupId>
     <artifactId>client</artifactId>
-    <version>2.2.0</version>
+    <version>2.3.0</version>
 </dependency>
 ```
 
@@ -74,6 +92,11 @@ It also replaces the unpaged pseudonym search `search(query)`, whose backend
 endpoint was removed in v2.8.0, with paged searches for pseudonyms and entities
 (see [Searching Page by Page](#searching-page-by-page)); the entity search
 requires backend v2.9.0.
+Client 2.3.0 adds the client credentials grant (see
+[Client Credentials](#client-credentials-service-accounts)), works with every
+backend version supported by client 2.2.0, and adds operations for
+de-pseudonymization and on-behalf-of auditing that require backend v2.11.0
+(see [De-Pseudonymizing](#de-pseudonymizing)).
 The client and backend use independent version numbers.
 
 ```java
@@ -100,6 +123,31 @@ leave `insertedRecordCount` empty (`null`).
 Project statistics requires `project:statistics` on the selected project.
 System statistics requires the global `system:statistics` permission. These
 permissions are enforced by the backend.
+
+## De-Pseudonymizing
+
+Backend v2.11.0 adds two read operations for applications that show pseudonymized data and let authorized users reveal the original identities.
+
+`lookup` resolves many pseudonym values of one domain in a single request and returns the found pseudonyms with their identifier items. Unknown values are left out. It requires `pseudonym:read` on the domain; the backend limits the number of values per request to its configured batch length.
+
+```java
+List<Pseudonym> found = trustdeck.project("research").pseudonyms("research-psn").lookup(List.of("PSN-1", "PSN-2"));
+```
+
+`getByPseudonym` returns the entity a pseudonym belongs to. The pseudonym may be stored in the entity type's associated domain or in a domain linked to it through a pseudonym chain. It requires `entity:read` on the entity type and `pseudonym:read` on the given domain; for a linked domain also `pseudonym:link` on it and `pseudonym:read` and `pseudonym:link` on the associated domain.
+
+```java
+Entity patient = trustdeck.project("research").entities("patient").getByPseudonym("research-psn", "PSN-1");
+```
+
+### Acting on Behalf of End Users
+
+When a technical user calls TrustDeck for an end user of another application, TrustDeck's audit trail only shows the technical user. `onBehalfOf` returns a client view that also sends the end user and the purpose of the requests in the `X-On-Behalf-Of` and `X-Purpose` headers, which backend v2.11.0 stores with each audit event. The values are informational only and never change the permissions of the authenticated user. The view shares transport and tokens with the original client and is cheap to create per request:
+
+```java
+List<Pseudonym> found = trustdeck.onBehalfOf("jdoe", "Re-identification in the FHIR dashboard")
+	.project("research").pseudonyms("research-psn").lookup(psns);
+```
 
 ## Searching Page by Page
 
