@@ -16,6 +16,12 @@ rebind the scope.
 
 The library requires Java 21 or newer. Maven is used to build the project and to run the included example.
 
+## Logging
+
+The library logs through the SLF4J API and does not ship a logging provider, so applications can keep their existing logging setup. The `slf4j-simple` dependency in the `pom.xml` is optional and only used by the included example; it is not passed on to applications.
+
+Without an SLF4J-compatible provider on the classpath, SLF4J prints a warning when it first initializes and discards all log output. The client keeps working normally. To see the client's log messages, add a provider such as Logback, Log4j2 (via `log4j-slf4j2-impl`), or `slf4j-simple` to the application's runtime dependencies.
+
 ## Configuration
 
 Create a `TrustDeckClient` with password-grant settings, preferably loaded from environment variables or a secrets manager. Applications with another OAuth flow may provide an `AccessTokenProvider` instead.
