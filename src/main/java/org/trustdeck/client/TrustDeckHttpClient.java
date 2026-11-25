@@ -39,6 +39,7 @@ import org.trustdeck.client.exception.TrustDeckClientLibraryException;
 import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.HttpStatusInfo;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -288,6 +289,29 @@ public final class TrustDeckHttpClient {
 	}
 
 	/**
+	 * Serializes JSON request bodies with the client's own Jackson 2 mapper. Otherwise, RestClient would pick
+	 * the JSON converter from the application's classpath. With Spring Framework 7 (Spring Boot 4), that is
+	 * Jackson 3, which cannot write Jackson 2 types such as {@code JsonNode} and silently sends their bean
+	 * properties instead. Strings, byte arrays, and non-JSON bodies (e.g. multipart) are left to RestClient.
+	 *
+	 * @param body the request body
+	 * @param contentType the request's content type; {@code null} means JSON
+	 * @return the body to hand to RestClient
+	 */
+	private Object requestBody(Object body, MediaType contentType) {
+		boolean json = contentType == null || MediaType.APPLICATION_JSON.isCompatibleWith(contentType);
+		if (!json || body instanceof String || body instanceof byte[]) {
+			return body;
+		}
+
+		try {
+			return mapper.writeValueAsBytes(body);
+		} catch (JsonProcessingException e) {
+			throw new TrustDeckClientLibraryException("Could not serialize the request body.", e);
+		}
+	}
+
+	/**
 	 * Executes an authenticated multipart request.
 	 *
 	 * @param method HTTP method
@@ -336,7 +360,7 @@ public final class TrustDeckHttpClient {
 					request.contentType(MediaType.APPLICATION_JSON);
 				}
 
-				request.body(body);
+				request.body(requestBody(body, contentType));
 			}
 
 			// Execute the request, validate the response status, and deserialize the response body into the expected type

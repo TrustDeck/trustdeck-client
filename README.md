@@ -16,6 +16,8 @@ rebind the scope.
 
 The library requires Java 21 or newer. Maven is used to build the project and to run the included example.
 
+The HTTP transport uses Spring's `RestClient`, which requires Spring Framework 6.1 or newer. In a Spring Boot application, that means Spring Boot 3.2 or newer; Spring Boot 4 (Spring Framework 7) is supported from client 2.3.0 on. The client reads and writes JSON with its own Jackson 2 `ObjectMapper`, so it also works in applications that use Jackson 3.
+
 ## Configuration
 
 Create a `TrustDeckClient` with password-grant or client-credentials settings, preferably loaded from environment variables or a secrets manager. Applications with another OAuth flow may provide an `AccessTokenProvider` instead.
