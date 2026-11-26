@@ -42,7 +42,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 /**
- * Verifies the client credentials grant and the additional on-behalf-of and purpose headers.
+ * Verifies the client credentials grant and the additional on-behalf-of header.
  *
  * @author Armin Müller
  */
@@ -147,23 +147,20 @@ class AuthenticationAndHeadersTest {
 	}
 
 	/**
-	 * A client view sends the on-behalf-of and purpose headers; the original client does not.
+	 * A client view sends the on-behalf-of header; the original client does not.
 	 */
 	@Test
-	void onBehalfOfViewSendsAuditHeaders() {
+	void onBehalfOfViewSendsAuditHeader() {
 		TrustDeckClient client = new TrustDeckClient(baseUrl, () -> "token");
 
-		client.onBehalfOf("jdoe", "Re-identification\r\nInjected: header").project("project").pseudonyms("domain").get("psn");
+		client.onBehalfOf("jdoe\r\nInjected: header").project("project").pseudonyms("domain").get("psn");
 		client.project("project").pseudonyms("domain").get("psn");
-		client.onBehalfOf("jdoe", null).project("project").pseudonyms("domain").get("psn");
+		client.onBehalfOf(" ").project("project").pseudonyms("domain").get("psn");
 
-		assertEquals("jdoe", apiRequests.get(0).get("x-on-behalf-of"));
-		assertEquals("Re-identification  Injected: header", apiRequests.get(0).get("x-purpose"));
+		assertEquals("jdoe  Injected: header", apiRequests.get(0).get("x-on-behalf-of"));
 		assertNull(apiRequests.get(0).get("injected"));
 		assertNull(apiRequests.get(1).get("x-on-behalf-of"));
-		assertNull(apiRequests.get(1).get("x-purpose"));
-		assertEquals("jdoe", apiRequests.get(2).get("x-on-behalf-of"));
-		assertNull(apiRequests.get(2).get("x-purpose"));
+		assertNull(apiRequests.get(2).get("x-on-behalf-of"));
 		assertEquals("Bearer token", apiRequests.get(0).get("authorization"));
 	}
 

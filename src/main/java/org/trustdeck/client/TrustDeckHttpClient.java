@@ -67,9 +67,6 @@ public final class TrustDeckHttpClient {
 	/** Request header naming the end user a technical user acts for (stored in TrustDeck's audit trail). */
 	public static final String ON_BEHALF_OF_HEADER = "X-On-Behalf-Of";
 
-	/** Request header naming the purpose of a request (stored in TrustDeck's audit trail). */
-	public static final String PURPOSE_HEADER = "X-Purpose";
-
 	/** Maximum number of characters sent in an additional header value. */
 	private static final int MAX_HEADER_VALUE_LENGTH = 1024;
 

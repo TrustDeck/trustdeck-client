@@ -150,10 +150,10 @@ Entity patient = trustdeck.project("research").entities("patient").getByPseudony
 
 ### Acting on Behalf of End Users
 
-When a technical user calls TrustDeck for an end user of another application, TrustDeck's audit trail only shows the technical user. `onBehalfOf` returns a client view that also sends the end user and the purpose of the requests in the `X-On-Behalf-Of` and `X-Purpose` headers, which backend v2.11.0 stores with each audit event. The values are informational only and never change the permissions of the authenticated user. The view shares transport and tokens with the original client and is cheap to create per request:
+When a technical user calls TrustDeck for an end user of another application, TrustDeck's audit trail only shows the technical user. `onBehalfOf` returns a client view that also sends the end user in the `X-On-Behalf-Of` header, which backend v2.11.0 stores with each audit event. The value is informational only and never changes the permissions of the authenticated user. The view shares transport and tokens with the original client and is cheap to create per request:
 
 ```java
-List<Pseudonym> found = trustdeck.onBehalfOf("jdoe", "Re-identification in the FHIR dashboard")
+List<Pseudonym> found = trustdeck.onBehalfOf("jdoe")
 	.project("research").pseudonyms("research-psn").lookup(psns);
 ```
 
