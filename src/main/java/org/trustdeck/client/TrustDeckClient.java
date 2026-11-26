@@ -37,7 +37,7 @@ import org.trustdeck.client.service.TrustDeckTokenService;
  *
  * @author Armin Müller
  */
-public class TrustDeckClient {
+public class TrustDeckClient implements AutoCloseable {
 
 	/** Shared HTTP transport used by all client services. */
 	private final TrustDeckHttpClient http;
@@ -60,6 +60,9 @@ public class TrustDeckClient {
 	/** Keycloak-backed token service. Null when the client uses a caller-supplied {@link AccessTokenProvider}. */
 	private final TrustDeckTokenService tokenService;
 
+	/** Whether this client created the token service and therefore closes it; false for client views. */
+	private final boolean ownsTokenService;
+
 	/**
 	 * Creates a client that obtains tokens from the supplied Keycloak configuration.
 	 *
@@ -69,6 +72,7 @@ public class TrustDeckClient {
 		validate(config);
 
 		tokenService = new TrustDeckTokenService(config);
+		ownsTokenService = true;
 		http = new TrustDeckHttpClient(config.getServiceUrl(), tokenService, config.getConnectTimeout(), config.getReadTimeout());
 		domains = new Domains(http);
 		projects = new Projects(http);
@@ -97,6 +101,7 @@ public class TrustDeckClient {
 	 */
 	public TrustDeckClient(String serviceUrl, AccessTokenProvider tokenProvider, Duration connectTimeout, Duration readTimeout) {
 		tokenService = null;
+		ownsTokenService = false;
 		http = new TrustDeckHttpClient(serviceUrl, tokenProvider, connectTimeout, readTimeout);
 		domains = new Domains(http);
 		projects = new Projects(http);
@@ -114,6 +119,7 @@ public class TrustDeckClient {
 	 */
 	private TrustDeckClient(TrustDeckClient source, Map<String, String> headers) {
 		tokenService = source.tokenService;
+		ownsTokenService = false;
 		http = source.http.withHeaders(headers);
 		domains = new Domains(http);
 		projects = new Projects(http);
@@ -224,6 +230,19 @@ public class TrustDeckClient {
 		health();
 
 		return true;
+	}
+
+	/**
+	 * Releases the HTTP client this client uses for Keycloak. Afterwards, requests that need a new
+	 * token fail. Clients created with an {@link AccessTokenProvider} hold no such resources, and
+	 * closing a view returned by {@link #onBehalfOf(String)} has no effect; close the original
+	 * client instead. Calling this method more than once has no effect.
+	 */
+	@Override
+	public void close() {
+		if (ownsTokenService) {
+			tokenService.close();
+		}
 	}
 
 	/**

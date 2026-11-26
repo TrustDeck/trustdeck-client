@@ -28,14 +28,22 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Thread-safe helper class to manage token retrieval for accessing TrustDeck.
+ * <p>
+ * The service holds an HTTP client for Keycloak; {@link #close()} releases it.
  *
  * @author Armin Müller
  */
 @Slf4j
-public class TrustDeckTokenService implements AccessTokenProvider {
+public class TrustDeckTokenService implements AccessTokenProvider, AutoCloseable {
 
 	/** Keycloak token manager object that allows multi-threaded access and refreshing of the token. */
 	private volatile TokenManager trustDeckTokenManager;
+
+	/** Keycloak client that owns the HTTP connections used by the token manager. */
+	private volatile Keycloak keycloak;
+
+	/** Whether {@link #close()} was called. */
+	private volatile boolean closed;
 
     /** Object used to set a lock to avoid race-conditions when initializing or refreshing the token. */
 	private final Object tokenLock = new Object();
@@ -100,8 +108,7 @@ public class TrustDeckTokenService implements AccessTokenProvider {
 						log.debug("Authenticating against Keycloak with the password grant.");
 					}
 
-					Keycloak keycloak = builder.build();
-
+					keycloak = builder.build();
 					trustDeckTokenManager = keycloak.tokenManager();
 				}
 			}
@@ -115,6 +122,10 @@ public class TrustDeckTokenService implements AccessTokenProvider {
      */
 	private void refreshTokenIfNecessary() {
 		synchronized (tokenLock) {
+			if (closed) {
+				throw new IllegalStateException("The TrustDeck token service is closed.");
+			}
+
 			if (trustDeckTokenManager.getAccessToken().getExpiresIn() <= 60L) {
 				try {
 					trustDeckTokenManager.refreshToken();
@@ -122,6 +133,24 @@ public class TrustDeckTokenService implements AccessTokenProvider {
 				} catch (Exception exception) {
 					throw new RuntimeException("Failed to refresh Keycloak token.", exception);
 				}
+			}
+		}
+	}
+
+	/**
+	 * Releases the HTTP client used for Keycloak. Afterwards, no further tokens can be obtained.
+	 * Calling this method more than once has no effect.
+	 */
+	@Override
+	public void close() {
+		synchronized (tokenLock) {
+			if (closed) {
+				return;
+			}
+
+			closed = true;
+			if (keycloak != null) {
+				keycloak.close();
 			}
 		}
 	}

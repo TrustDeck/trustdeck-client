@@ -57,6 +57,10 @@ TrustDeckClientConfig config = TrustDeckClientConfig.builder()
 TrustDeckClient trustdeck = new TrustDeckClient(config);
 ```
 
+### Closing the Client
+
+A client configured with Keycloak credentials holds an HTTP client for Keycloak. Create one client per application, reuse it, and call `close()` when the application shuts down (or use try-with-resources for short-lived clients). Clients created with an `AccessTokenProvider` hold no such resources, and closing a view returned by `onBehalfOf` has no effect. In Spring, a `TrustDeckClient` bean is closed automatically when the context shuts down.
+
 ### Client Credentials (Service Accounts)
 
 Technical integrations, e.g. another application's backend, can authenticate as the service account of a confidential Keycloak client instead of as a user. Enable **Client authentication** and **Service accounts** on the client (Direct Access Grants are not needed), add the audience mapper described above, and grant the TrustDeck permissions to the client's service-account user (`service-account-<client-id>`). No user name or password is configured:

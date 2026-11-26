@@ -107,7 +107,7 @@ class AuthenticationAndHeadersTest {
 
 		TrustDeckClientConfig clientCredentials = TrustDeckClientConfig.clientCredentials(baseUrl, baseUrl, "test", "client", "secret");
 		assertTrue(clientCredentials.usesClientCredentials());
-		new TrustDeckClient(clientCredentials);
+		new TrustDeckClient(clientCredentials).close();
 
 		TrustDeckClientConfig missingSecret = TrustDeckClientConfig.builder().serviceUrl(baseUrl).keycloakUrl(baseUrl)
 				.realm("test").clientId("client").grantType(GrantType.CLIENT_CREDENTIALS).build();
@@ -119,9 +119,9 @@ class AuthenticationAndHeadersTest {
 	 */
 	@Test
 	void clientCredentialsGrantObtainsAndUsesAServiceAccountToken() {
-		TrustDeckClient client = new TrustDeckClient(TrustDeckClientConfig.clientCredentials(baseUrl, baseUrl, "test", "client", "secret"));
-
-		client.project("project").pseudonyms("domain").get("psn");
+		try (TrustDeckClient client = new TrustDeckClient(TrustDeckClientConfig.clientCredentials(baseUrl, baseUrl, "test", "client", "secret"))) {
+			client.project("project").pseudonyms("domain").get("psn");
+		}
 
 		assertEquals(1, tokenRequests.size());
 		Map<String, String> form = tokenRequests.get(0);
@@ -136,9 +136,9 @@ class AuthenticationAndHeadersTest {
 	 */
 	@Test
 	void passwordGrantSendsUserCredentials() {
-		TrustDeckClient client = new TrustDeckClient(new TrustDeckClientConfig(baseUrl, baseUrl, "test", "client", "secret", "user", "pw"));
-
-		client.project("project").pseudonyms("domain").get("psn");
+		try (TrustDeckClient client = new TrustDeckClient(new TrustDeckClientConfig(baseUrl, baseUrl, "test", "client", "secret", "user", "pw"))) {
+			client.project("project").pseudonyms("domain").get("psn");
+		}
 
 		Map<String, String> form = tokenRequests.get(0);
 		assertEquals("password", form.get("grant_type"));
@@ -162,6 +162,25 @@ class AuthenticationAndHeadersTest {
 		assertNull(apiRequests.get(1).get("x-on-behalf-of"));
 		assertNull(apiRequests.get(2).get("x-on-behalf-of"));
 		assertEquals("Bearer token", apiRequests.get(0).get("authorization"));
+	}
+
+	/**
+	 * Closing a client releases its Keycloak connection, so no further tokens can be obtained.
+	 * Closing a view or calling close twice has no effect.
+	 */
+	@Test
+	void closeReleasesTheTokenService() {
+		TrustDeckClient client = new TrustDeckClient(TrustDeckClientConfig.clientCredentials(baseUrl, baseUrl, "test", "client", "secret"));
+		client.project("project").pseudonyms("domain").get("psn");
+
+		client.onBehalfOf("jdoe").close();
+		assertEquals("service-account-token", client.getTokenService().getAccessToken());
+
+		client.close();
+		client.close();
+		assertThrows(IllegalStateException.class, () -> client.getTokenService().getAccessToken());
+
+		new TrustDeckClient(baseUrl, () -> "token").close();
 	}
 
 	/**

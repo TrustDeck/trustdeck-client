@@ -210,6 +210,9 @@ public class TrustDeckClientExample {
 			} catch (RuntimeException e) {
 				System.out.println("\nFailed to delete example resources with exception: " + e.getMessage());
 			}
+
+			// Release the client's connection to Keycloak
+			client.close();
 		}
 	}
 
