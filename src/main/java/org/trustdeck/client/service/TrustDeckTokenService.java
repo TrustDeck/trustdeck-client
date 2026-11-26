@@ -17,6 +17,7 @@
 
 package org.trustdeck.client.service;
 
+import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.token.TokenManager;
@@ -81,15 +82,25 @@ public class TrustDeckTokenService implements AccessTokenProvider {
 		if (trustDeckTokenManager == null) {
 			synchronized (tokenLock) {
 				if (trustDeckTokenManager == null) {
-					Keycloak keycloak = KeycloakBuilder.builder()
+					KeycloakBuilder builder = KeycloakBuilder.builder()
 							.serverUrl(trustDeckClientConfig.getKeycloakUrl())
 							.realm(trustDeckClientConfig.getRealm())
 							.clientId(trustDeckClientConfig.getClientId())
-							.clientSecret(trustDeckClientConfig.getClientSecret())
-							.username(trustDeckClientConfig.getUserName())
-							.password(trustDeckClientConfig.getPassword())
-							.grantType("password")
-							.build();
+							.clientSecret(trustDeckClientConfig.getClientSecret());
+
+					if (trustDeckClientConfig.usesClientCredentials()) {
+						// Authenticate as the client's service account; Keycloak issues no refresh token
+						// for this grant, so the token manager requests a new token when needed.
+						builder.grantType(OAuth2Constants.CLIENT_CREDENTIALS);
+						log.debug("Authenticating against Keycloak with the client credentials grant.");
+					} else {
+						builder.username(trustDeckClientConfig.getUserName())
+								.password(trustDeckClientConfig.getPassword())
+								.grantType(OAuth2Constants.PASSWORD);
+						log.debug("Authenticating against Keycloak with the password grant.");
+					}
+
+					Keycloak keycloak = builder.build();
 
 					trustDeckTokenManager = keycloak.tokenManager();
 				}

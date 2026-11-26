@@ -17,6 +17,7 @@
 
 package org.trustdeck.client.service;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -193,6 +194,39 @@ public class Pseudonyms {
 	 */
 	public Pseudonym get(String psn) {
 		return request(HttpMethod.GET, path(), Map.of("psn", TrustDeckHttpClient.require(psn, "psn")), null, Set.of(200));
+	}
+
+	/**
+	 * Looks up many pseudonyms by their pseudonym values in one request, e.g. to de-pseudonymize
+	 * a result list. Requires the {@code pseudonym:read} permission on the domain (backend v2.11.0 or newer).
+	 * <p>
+	 * Only found pseudonyms are returned; unknown values are left out. Blank values are ignored and
+	 * duplicates are sent once. The backend limits the number of values per request to its configured
+	 * batch length; split larger collections into several calls.
+	 *
+	 * @param psns the pseudonym values to look up
+	 * @return the found pseudonyms (in no guaranteed order), empty when none was found
+	 */
+	public List<Pseudonym> lookup(Collection<String> psns) {
+		if (psns == null) {
+			throw new IllegalArgumentException("psns must not be null.");
+		}
+
+		// Drop blank values and duplicates while keeping the caller's order
+		List<String> values = psns.stream()
+				.filter(Objects::nonNull)
+				.map(String::trim)
+				.filter(psn -> !psn.isEmpty())
+				.distinct()
+				.toList();
+		if (values.isEmpty()) {
+			return List.of();
+		}
+
+		Response<List<Pseudonym>> response = http.exchange(HttpMethod.POST, http.uri(path("lookup"), Map.of()), values,
+				new ParameterizedTypeReference<List<Pseudonym>>() {}, Set.of(200), true);
+
+		return response.getBody() == null ? List.of() : response.getBody();
 	}
 
 	/**

@@ -20,6 +20,8 @@ package org.trustdeck.client;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -37,6 +39,7 @@ import org.trustdeck.client.exception.TrustDeckClientLibraryException;
 import org.trustdeck.client.exception.TrustDeckResponseException;
 import org.trustdeck.client.model.HttpStatusInfo;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,6 +64,12 @@ public final class TrustDeckHttpClient {
 	/** Maximum number of error-body characters retained in exceptions. */
 	private static final int MAX_ERROR_BODY_LENGTH = 16_384;
 
+	/** Request header naming the end user a technical user acts for (stored in TrustDeck's audit trail). */
+	public static final String ON_BEHALF_OF_HEADER = "X-On-Behalf-Of";
+
+	/** Maximum number of characters sent in an additional header value. */
+	private static final int MAX_HEADER_VALUE_LENGTH = 1024;
+
 	/** Spring HTTP client. */
 	private final RestClient restClient;
 
@@ -72,6 +81,9 @@ public final class TrustDeckHttpClient {
 
 	/** Base URI for all requests. */
 	private final URI baseUri;
+
+	/** Additional headers sent with every request; never {@code null}. */
+	private final Map<String, String> additionalHeaders;
 
 	/**
 	 * Creates a transport for a service URL and token provider.
@@ -116,9 +128,79 @@ public final class TrustDeckHttpClient {
 					.configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false);
 			
 			this.tokenProvider = tokenProvider;
+			this.additionalHeaders = Map.of();
 		} catch (RuntimeException e) {
 			throw new TrustDeckClientLibraryException("Invalid TrustDeck client configuration.", e);
 		}
+	}
+
+	/**
+	 * Creates a transport that shares everything with the given transport except the additional headers.
+	 *
+	 * @param source the transport to derive from
+	 * @param additionalHeaders the sanitized additional headers
+	 */
+	private TrustDeckHttpClient(TrustDeckHttpClient source, Map<String, String> additionalHeaders) {
+		this.restClient = source.restClient;
+		this.mapper = source.mapper;
+		this.tokenProvider = source.tokenProvider;
+		this.baseUri = source.baseUri;
+		this.additionalHeaders = additionalHeaders;
+	}
+
+	/**
+	 * Returns a transport that sends the given headers with every request in addition to
+	 * this transport's additional headers. Values are stripped of control characters and
+	 * shortened to {@value #MAX_HEADER_VALUE_LENGTH} characters; {@code null} or blank values
+	 * remove the header. This transport is not changed.
+	 *
+	 * @param headers the headers to add
+	 * @return the derived transport
+	 */
+	public TrustDeckHttpClient withHeaders(Map<String, String> headers) {
+		Map<String, String> merged = new LinkedHashMap<>(additionalHeaders);
+		if (headers != null) {
+			headers.forEach((name, value) -> {
+				require(name, "header name");
+				String sanitized = sanitizeHeaderValue(value);
+				if (sanitized == null) {
+					merged.remove(name);
+				} else {
+					merged.put(name, sanitized);
+				}
+			});
+		}
+
+		return new TrustDeckHttpClient(this, Collections.unmodifiableMap(merged));
+	}
+
+	/**
+	 * Returns the additional headers sent with every request.
+	 *
+	 * @return unmodifiable header map
+	 */
+	public Map<String, String> additionalHeaders() {
+		return additionalHeaders;
+	}
+
+	/**
+	 * Removes control characters (including line breaks) from a header value, trims it,
+	 * and limits its length.
+	 *
+	 * @param value the raw value
+	 * @return the sanitized value, or {@code null} when nothing remains
+	 */
+	static String sanitizeHeaderValue(String value) {
+		if (value == null) {
+			return null;
+		}
+
+		String sanitized = value.replaceAll("\\p{Cntrl}", " ").trim();
+		if (sanitized.isEmpty()) {
+			return null;
+		}
+
+		return sanitized.length() > MAX_HEADER_VALUE_LENGTH ? sanitized.substring(0, MAX_HEADER_VALUE_LENGTH) : sanitized;
 	}
 
 	/**
@@ -204,6 +286,29 @@ public final class TrustDeckHttpClient {
 	}
 
 	/**
+	 * Serializes JSON request bodies with the client's own Jackson 2 mapper. Otherwise, RestClient would pick
+	 * the JSON converter from the application's classpath. With Spring Framework 7 (Spring Boot 4), that is
+	 * Jackson 3, which cannot write Jackson 2 types such as {@code JsonNode} and silently sends their bean
+	 * properties instead. Strings, byte arrays, and non-JSON bodies (e.g. multipart) are left to RestClient.
+	 *
+	 * @param body the request body
+	 * @param contentType the request's content type; {@code null} means JSON
+	 * @return the body to hand to RestClient
+	 */
+	private Object requestBody(Object body, MediaType contentType) {
+		boolean json = contentType == null || MediaType.APPLICATION_JSON.isCompatibleWith(contentType);
+		if (!json || body instanceof String || body instanceof byte[]) {
+			return body;
+		}
+
+		try {
+			return mapper.writeValueAsBytes(body);
+		} catch (JsonProcessingException e) {
+			throw new TrustDeckClientLibraryException("Could not serialize the request body.", e);
+		}
+	}
+
+	/**
 	 * Executes an authenticated multipart request.
 	 *
 	 * @param method HTTP method
@@ -236,6 +341,9 @@ public final class TrustDeckHttpClient {
 		try {
 			RequestBodySpec request = restClient.method(method).uri(uri).header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
+			// Add additional headers, e.g. on whose behalf the request is made
+			additionalHeaders.forEach(request::header);
+
 			// Add Bearer token
 			if (authenticated) {
 				request.header(HttpHeaders.AUTHORIZATION, "Bearer " + token());
@@ -249,7 +357,7 @@ public final class TrustDeckHttpClient {
 					request.contentType(MediaType.APPLICATION_JSON);
 				}
 
-				request.body(body);
+				request.body(requestBody(body, contentType));
 			}
 
 			// Execute the request, validate the response status, and deserialize the response body into the expected type

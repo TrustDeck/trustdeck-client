@@ -141,6 +141,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PseudonymController updateBatch", "PUT", "/api/domains/domain/pseudonyms/batch", Map.of(), true, true, () -> projectScope.pseudonyms("domain").updateBatch(List.of(update))));
 		cases.add(c("PseudonymController updateComplete", "PUT", "/api/domains/domain/pseudonyms/complete", Map.of("regeneratePseudonym", "true"), true, true, () -> projectScope.pseudonyms("domain").updateComplete(update, true)));
 		cases.add(c("PseudonymController update", "PUT", "/api/domains/domain/pseudonyms", Map.of(), true, true, () -> projectScope.pseudonyms("domain").update(update)));
+		cases.add(c("PseudonymController lookup", "POST", "/api/domains/domain/pseudonyms/lookup", Map.of(), true, true, () -> projectScope.pseudonyms("domain").lookup(List.of("psn-1", "psn-2"))));
 		cases.add(c("PseudonymController validate", "GET", "/api/domains/domain/pseudonyms/validation", Map.of("psn", "psn"), false, true, () -> projectScope.pseudonyms("domain").validate("psn")));
 		cases.add(c("ProjectController create", "POST", "/api/projects", Map.of(), true, true, () -> client.projects().create(project)));
 		cases.add(c("ProjectController list", "GET", "/api/projects", Map.of(), false, true, () -> client.projects().getAll()));
@@ -174,6 +175,7 @@ class PublicEndpointContractTest {
 		cases.add(c("EntityController search", "GET", "/api/projects/project/entities/type", Map.of("query", "query"), false, true, () -> projectScope.entities("type").search("query")));
 		cases.add(c("EntityController searchPage", "GET", "/api/projects/project/entities/type", Map.of("query", "query", "page", "1"), false, true, () -> projectScope.entities("type").searchPage("query", 1, null)));
 		cases.add(c("EntityController searchPage sorted", "GET", "/api/projects/project/entities/type", Map.of("query", "*", "page", "0", "size", "25", "match", "prefix", "sort", "attribute:address.city", "direction", "asc"), false, true, () -> projectScope.entities("type").searchPage("*", 0, 25, "prefix", "attribute:address.city", "asc")));
+		cases.add(c("EntityController byPseudonym", "GET", "/api/projects/project/entities/type/by-pseudonym", Map.of("domain", "domain", "psn", "psn"), false, true, () -> projectScope.entities("type").getByPseudonym("domain", "psn")));
 		cases.add(c("EntityController pseudonyms", "GET", "/api/projects/project/entities/type/" + id + "/pseudonyms", Map.of(), false, true, () -> projectScope.entities("type").getPseudonyms(id)));
 		cases.add(c("EntityController recordLinkage", "POST", "/api/projects/project/entities/type/record-linkage", Map.of(), true, true, () -> projectScope.entities("type").findRecordLinkageCandidates(entity)));
 		cases.add(c("PermissionController userSearch", "GET", "/api/permissions/users", Map.of("query", "query"), false, true, () -> client.permissions().searchUsers("query")));
@@ -196,7 +198,7 @@ class PublicEndpointContractTest {
 		cases.add(c("PermissionController projectDelete", "DELETE", "/api/permissions/projects/project", Map.of("userId", "user"), true, true, () -> projectScope.permissions().delete("user", permissions)));
 		cases.add(c("PermissionController globalDelete", "DELETE", "/api/permissions/global", Map.of("userId", "user"), true, true, () -> client.permissions().deleteGlobal("user", permissions)));
 		cases.add(c("PermissionController typeDelete", "DELETE", "/api/permissions/projects/project/entity-types/type", Map.of("userId", "user"), true, true, () -> projectScope.entityTypePermissions("type").delete("user", permissions)));
-		assertEquals(81, cases.size());
+		assertEquals(83, cases.size());
 		
 		return cases.stream().map(spec -> DynamicTest.dynamicTest(spec.name, () -> run(spec)));
 	}
@@ -310,7 +312,7 @@ class PublicEndpointContractTest {
 				requestBody));
 		
 		int status = current.method.equals("DELETE") ? 204
-						: current.path.endsWith("record-linkage") ? 200 : current.method.equals("POST") ? 201 : 200;
+						: current.path.endsWith("record-linkage") || current.path.endsWith("/lookup") ? 200 : current.method.equals("POST") ? 201 : 200;
 		
 		byte[] response = current.path.equals("/api/health")
 				? "{\"status\":\"UP\",\"service\":\"test\",\"timestamp\":\"2026-01-01T00:00:00Z\"}".getBytes(StandardCharsets.UTF_8)

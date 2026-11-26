@@ -17,6 +17,7 @@
 
 package org.trustdeck.client;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.time.Duration;
@@ -102,6 +103,46 @@ public class TrustDeckClient {
 		baseEntityTypes = new BaseEntityTypes(http);
 		permissions = new Permissions(http);
 		system = new SystemOperations(http);
+	}
+
+	/**
+	 * Creates a client view that shares the transport and token acquisition of the given client
+	 * but sends the given additional headers with every request.
+	 *
+	 * @param source the client to derive from
+	 * @param headers the additional request headers
+	 */
+	private TrustDeckClient(TrustDeckClient source, Map<String, String> headers) {
+		tokenService = source.tokenService;
+		http = source.http.withHeaders(headers);
+		domains = new Domains(http);
+		projects = new Projects(http);
+		baseEntityTypes = new BaseEntityTypes(http);
+		permissions = new Permissions(http);
+		system = new SystemOperations(http);
+	}
+
+	/**
+	 * Returns a client view whose requests tell TrustDeck on whose behalf they are made. This is
+	 * meant for technical users (e.g. a service account) acting for an end user of another
+	 * application: TrustDeck stores the value in its audit trail.
+	 * <p>
+	 * The value is sent in the {@value TrustDeckHttpClient#ON_BEHALF_OF_HEADER} header. It is
+	 * informational only and never changes what the authenticated user is allowed to do. A
+	 * {@code null} or blank value is not sent. Line breaks and other control characters are removed
+	 * (backend v2.11.0 or newer stores the value).
+	 * <p>
+	 * The returned view shares the HTTP transport and token acquisition with this client and is
+	 * cheap to create, e.g. once per incoming request. This client itself is not changed.
+	 *
+	 * @param onBehalfOf the end user the requests are made for, or {@code null}
+	 * @return a client view sending the given value with every request
+	 */
+	public TrustDeckClient onBehalfOf(String onBehalfOf) {
+		Map<String, String> headers = new LinkedHashMap<>();
+		headers.put(TrustDeckHttpClient.ON_BEHALF_OF_HEADER, onBehalfOf);
+
+		return new TrustDeckClient(this, headers);
 	}
 
 	/**
@@ -210,7 +251,11 @@ public class TrustDeckClient {
 		TrustDeckHttpClient.require(config.getRealm(), "realm");
 		TrustDeckHttpClient.require(config.getClientId(), "clientId");
 		TrustDeckHttpClient.require(config.getClientSecret(), "clientSecret");
-		TrustDeckHttpClient.require(config.getUserName(), "userName");
-		TrustDeckHttpClient.require(config.getPassword(), "password");
+
+		// User credentials are only needed for the password grant
+		if (!config.usesClientCredentials()) {
+			TrustDeckHttpClient.require(config.getUserName(), "userName");
+			TrustDeckHttpClient.require(config.getPassword(), "password");
+		}
 	}
 }

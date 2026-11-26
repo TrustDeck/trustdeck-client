@@ -122,6 +122,27 @@ public class Entities {
 	}
 
 	/**
+	 * Gets the entity a pseudonym belongs to (backend v2.11.0 or newer).
+	 * <p>
+	 * The pseudonym may be stored in this entity type's associated domain or in another domain
+	 * that is linked to it through a pseudonym chain. Requires {@code entity:read} on this entity
+	 * type and {@code pseudonym:read} on the given domain; for linked domains additionally
+	 * {@code pseudonym:link} on the given domain and {@code pseudonym:read} and {@code pseudonym:link}
+	 * on the associated domain.
+	 *
+	 * @param domainName the domain the pseudonym belongs to
+	 * @param psn the pseudonym value
+	 * @return entity
+	 */
+	public Entity getByPseudonym(String domainName, String psn) {
+		Map<String, Object> query = new LinkedHashMap<>();
+		query.put("domain", TrustDeckHttpClient.require(domainName, "domainName"));
+		query.put("psn", TrustDeckHttpClient.require(psn, "psn"));
+
+		return request(HttpMethod.GET, path("by-pseudonym"), query, null, Set.of(200));
+	}
+
+	/**
 	 * Updates an entity.
 	 * 
 	 * @param trustDeckId the entity identifier
